@@ -69,23 +69,7 @@ func isExt(b byte) bool {
 	return (b >= 0xc7 && b <= 0xc9)
 }
 
-type extFormat struct {
-	FirstByte byte
-	ExtType   int8
-	TypeName  string
-}
-
-var exts []*extFormat
 var typeStr map[byte]string
-
-func extFormatInit() {
-	exts = make([]*extFormat, 8)
-
-	exts = append(exts, &extFormat{FirstByte: FixExt4Format, ExtType: -1, TypeName: "timestamp 32"})
-	exts = append(exts, &extFormat{FirstByte: FixExt8Format, ExtType: -1, TypeName: "timestamp 64"})
-	exts = append(exts, &extFormat{FirstByte: Ext8Format, ExtType: -1, TypeName: "timestamp 96"})
-
-}
 
 func typeNameInit() {
 	typeStr = map[byte]string{}
@@ -138,19 +122,6 @@ func (obj *MPObject) ReadNum(size int, buf *bytes.Buffer, conv func([]byte) stri
 	bufs := buf.Next(size)
 	obj.Raw = append(obj.Raw, bufs...)
 	obj.DataStr = conv(bufs)
-}
-
-func (obj *MPObject) ReadExtType(buf *bytes.Buffer) error {
-	types := buf.Next(1)
-	obj.Raw = append(obj.Raw, types...)
-
-	var v int8
-	err := binary.Read(bytes.NewReader(types), binary.BigEndian, &v)
-	if err != nil {
-		return err
-	}
-	obj.ExtType = v
-	return nil
 }
 
 func (obj *MPObject) decodeCollection(buf *bytes.Buffer, length int) error {
@@ -213,9 +184,10 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		data := buf.Next(1 << uint(firstbyte-FixExt1Format))
-		obj.DataStr = fmt.Sprintf("0x%x", data)
+		if !obj.SetRegisteredExt(data) {
+			obj.DataStr = fmt.Sprintf("0x%x", data)
+		}
 		obj.Raw = append(obj.Raw, data...)
 	case isExt(firstbyte):
 		obj.TypeName = typeStr[firstbyte]
@@ -223,13 +195,13 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		/* length */
 		switch firstbyte {
 		case Ext8Format:
-			length := buf.Next(1)
+			length = buf.Next(1)
 			obj.Length = uint32(length[0])
 		case Ext16Format:
-			length := buf.Next(2)
+			length = buf.Next(2)
 			obj.Length = uint32(binary.BigEndian.Uint16(length))
 		case Ext32Format:
-			length := buf.Next(4)
+			length = buf.Next(4)
 			obj.Length = binary.BigEndian.Uint32(length)
 		}
 		obj.Raw = append(obj.Raw, length...)
@@ -241,7 +213,9 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		}
 
 		data := buf.Next(int(obj.Length))
-		obj.DataStr = fmt.Sprintf("0x%x", data)
+		if !obj.SetRegisteredExt(data) {
+			obj.DataStr = fmt.Sprintf("0x%x", data)
+		}
 		obj.Raw = append(obj.Raw, data...)
 
 	default:
