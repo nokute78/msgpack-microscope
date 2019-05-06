@@ -55,7 +55,7 @@ func extFormatInit() {
 	RegisterExt(Ext8Format, &extFormat{ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
 }
 
-func (obj *MPObject) ReadExtType(buf *bytes.Buffer) error {
+func (obj *MPObject) SetExtType(buf *bytes.Buffer) error {
 	types := buf.Next(1)
 	obj.Raw = append(obj.Raw, types...)
 
