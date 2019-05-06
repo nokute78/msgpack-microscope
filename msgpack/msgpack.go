@@ -153,7 +153,7 @@ func (obj *MPObject) ReadExtType(buf *bytes.Buffer) error {
 	return nil
 }
 
-func decodeCollection(obj *MPObject, buf *bytes.Buffer, length int) error {
+func (obj *MPObject) decodeCollection(buf *bytes.Buffer, length int) error {
 	obj.Child = make([]*MPObject, length)
 
 	for i := 0; i < length; i++ {
@@ -186,7 +186,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.TypeName = "fixmap"
 		obj.Length = uint32(firstbyte & 0xf)
 		obj.DataStr = "(fixmap)"
-		err := decodeCollection(obj, buf, int(obj.Length)*2)
+		err := obj.decodeCollection(buf, int(obj.Length)*2)
 		if err != nil {
 			return nil, err
 		}
@@ -194,7 +194,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.TypeName = "fixarray"
 		obj.Length = uint32(firstbyte & 0xf)
 		obj.DataStr = "(fixarray)"
-		err := decodeCollection(obj, buf, int(obj.Length))
+		err := obj.decodeCollection(buf, int(obj.Length))
 		if err != nil {
 			return nil, err
 		}
@@ -381,7 +381,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			obj.Length = uint32(binary.BigEndian.Uint16(length))
 			obj.DataStr = "(array 16)"
-			err := decodeCollection(obj, buf, int(obj.Length))
+			err := obj.decodeCollection(buf, int(obj.Length))
 			if err != nil {
 				return nil, err
 			}
@@ -391,7 +391,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 			obj.Raw = append(obj.Raw, length...)
 			obj.Length = binary.BigEndian.Uint32(length)
 			obj.DataStr = "(array 32)"
-			err := decodeCollection(obj, buf, int(obj.Length))
+			err := obj.decodeCollection(buf, int(obj.Length))
 			if err != nil {
 				return nil, err
 			}
@@ -402,7 +402,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			obj.Length = uint32(binary.BigEndian.Uint16(length))
 			obj.DataStr = "(map 16)"
-			err := decodeCollection(obj, buf, int(obj.Length)*2)
+			err := obj.decodeCollection(buf, int(obj.Length)*2)
 			if err != nil {
 				return nil, err
 			}
@@ -413,7 +413,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			obj.Length = binary.BigEndian.Uint32(length)
 			obj.DataStr = "(map 32)"
-			err := decodeCollection(obj, buf, int(obj.Length)*2)
+			err := obj.decodeCollection(buf, int(obj.Length)*2)
 			if err != nil {
 				return nil, err
 			}
