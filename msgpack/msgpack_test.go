@@ -170,3 +170,15 @@ func TestNestedMap(t *testing.T) {
 	}
 
 }
+
+func BenchmarkDecode(b *testing.B) {
+	/* {"0":"0", "1":{"2":"2", "3":"3", "4":"4"}, "5":"5" } in JSON */
+	var benchData []byte = []byte{0x83, 0xa1, 0x30, 0xa1, 0x30, 0xa1, 0x31, 0x83, 0xa1, 0x32, 0xa1, 0x32, 0xa1, 0x33, 0xa1, 0x33, 0xa1, 0x34, 0xa1, 0x34, 0xa1, 0x35, 0xa1, 0x35}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := Decode(bytes.NewBuffer(benchData))
+		if err != nil && err != io.EOF {
+			b.Errorf("Decode error %s", err)
+		}
+	}
+}
