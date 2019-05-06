@@ -136,3 +136,37 @@ func TestDecode(t *testing.T) {
 		}
 	}
 }
+
+func TestNestedMap(t *testing.T) {
+	/* {"0":"0", "1":{"2":"2", "3":"3", "4":"4"}} in JSON */
+	b := []byte{0x82, 0xa1, 0x30, 0xa1, 0x30, 0xa1, 0x31, 0x83, 0xa1, 0x32, 0xa1, 0x32, 0xa1, 0x33, 0xa1, 0x33, 0xa1, 0x34, 0xa1, 0x34}
+
+	typeNameInit()
+	extFormatInit()
+
+	ret, err := Decode(bytes.NewBuffer(b))
+	if err != nil && err != io.EOF {
+		t.Errorf("Decode error %s", err)
+	}
+	if len(ret.Child) != 2*2 {
+		t.Errorf("Map Size error %d != 4", len(ret.Child))
+	}
+
+	testcase := []string{"0", "0", "1"}
+	for i, v := range testcase {
+		if ret.Child[i].DataStr != v {
+			t.Errorf("Child[%d] error. \"%s\" is not \"%s\"", i, ret.Child[i].DataStr, v)
+		}
+	}
+
+	if len(ret.Child[3].Child) != 3*2 {
+		t.Errorf("Map Size error %d != 6", len(ret.Child[3].Child))
+	}
+	testcase = []string{"2", "2", "3", "3", "4", "4"}
+	for i, v := range testcase {
+		if ret.Child[3].Child[i].DataStr != v {
+			t.Errorf("Child[%d] error. \"%s\" is not \"%s\"", 3+i, ret.Child[3].Child[i].DataStr, v)
+		}
+	}
+
+}
