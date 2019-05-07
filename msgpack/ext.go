@@ -48,6 +48,9 @@ func RegisterExt(b byte, ext *extFormat) {
 }
 
 func extFormatInit() {
+	if len(extFormats) != 0 {
+		return
+	}
 	extFormats = map[byte]([]*extFormat){}
 
 	RegisterExt(FixExt4Format, &extFormat{ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32})
@@ -55,7 +58,7 @@ func extFormatInit() {
 	RegisterExt(Ext8Format, &extFormat{ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
 }
 
-func (obj *MPObject) SetExtType(buf *bytes.Buffer) error {
+func (obj *MPObject) setExtType(buf *bytes.Buffer) error {
 	types := buf.Next(1)
 	obj.Raw = append(obj.Raw, types...)
 
@@ -68,7 +71,7 @@ func (obj *MPObject) SetExtType(buf *bytes.Buffer) error {
 	return nil
 }
 
-func (obj *MPObject) SetRegisteredExt(extData []byte) bool {
+func (obj *MPObject) setRegisteredExt(extData []byte) bool {
 	list, ok := extFormats[obj.FirstByte]
 	if ok && len(list) > 0 {
 		for _, v := range list {

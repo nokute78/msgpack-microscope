@@ -7,12 +7,11 @@ import (
 )
 
 func TestTimestampExt(t *testing.T) {
-	typeNameInit()
-	extFormatInit()
+	Init()
 
 	tm32 := &MPObject{FirstByte: 0xd6, ExtType: -1}
-	if !tm32.SetRegisteredExt([]byte{0x00, 0x00, 0x00, 0x01}) {
-		t.Error("tm32.SetRegisteredExt Failed")
+	if !tm32.setRegisteredExt([]byte{0x00, 0x00, 0x00, 0x01}) {
+		t.Error("tm32.setRegisteredExt Failed")
 	}
 	timestr := fmt.Sprintf("%v", time.Unix(1, 0))
 	if tm32.DataStr != timestr {
@@ -20,8 +19,8 @@ func TestTimestampExt(t *testing.T) {
 	}
 
 	tm64 := &MPObject{FirstByte: 0xd7, ExtType: -1}
-	if !tm64.SetRegisteredExt([]byte{0x00, 0x00, 0x01, 0x90, 0x00, 0x00, 0x00, 0x01}) {
-		t.Error("tm64.SetRegisteredExt Failed")
+	if !tm64.setRegisteredExt([]byte{0x00, 0x00, 0x01, 0x90, 0x00, 0x00, 0x00, 0x01}) {
+		t.Error("tm64.setRegisteredExt Failed")
 	}
 	timestr = fmt.Sprintf("%v", time.Unix(1, 100))
 	if tm64.DataStr != timestr {
@@ -29,8 +28,8 @@ func TestTimestampExt(t *testing.T) {
 	}
 
 	tm96 := &MPObject{FirstByte: 0xc7, ExtType: -1}
-	if !tm96.SetRegisteredExt([]byte{0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}) {
-		t.Error("tm96.SetRegisteredExt Failed")
+	if !tm96.setRegisteredExt([]byte{0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}) {
+		t.Error("tm96.setRegisteredExt Failed")
 	}
 	timestr = fmt.Sprintf("%v", time.Unix(1, 100))
 	if tm96.DataStr != timestr {

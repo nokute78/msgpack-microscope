@@ -87,6 +87,9 @@ func Init() {
 }
 
 func typeNameInit() {
+	if len(typeStr) != 0 {
+		return
+	}
 	typeStr = map[byte]string{}
 
 	typeStr[NilFormat] = "nil"
@@ -133,13 +136,13 @@ type MPObject struct {
 	Child     []*MPObject
 }
 
-func (obj *MPObject) SetNum(size int, buf *bytes.Buffer, conv func([]byte) string) {
+func (obj *MPObject) setNum(size int, buf *bytes.Buffer, conv func([]byte) string) {
 	bufs := buf.Next(size)
 	obj.Raw = append(obj.Raw, bufs...)
 	obj.DataStr = conv(bufs)
 }
 
-func (obj *MPObject) SetCollection(buf *bytes.Buffer, length int) error {
+func (obj *MPObject) setCollection(buf *bytes.Buffer, length int) error {
 	obj.Child = make([]*MPObject, length)
 
 	for i := 0; i < length; i++ {
@@ -154,6 +157,11 @@ func (obj *MPObject) SetCollection(buf *bytes.Buffer, length int) error {
 }
 
 func Decode(buf *bytes.Buffer) (*MPObject, error) {
+	Init()
+	return decode(buf)
+}
+
+func decode(buf *bytes.Buffer) (*MPObject, error) {
 	firstbyte, err := buf.ReadByte()
 	if err != nil {
 		/* io.EOF ?*/
@@ -172,7 +180,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.TypeName = "fixmap"
 		obj.Length = uint32(firstbyte & 0xf)
 		obj.DataStr = "(fixmap)"
-		err := obj.SetCollection(buf, int(obj.Length)*2)
+		err := obj.setCollection(buf, int(obj.Length)*2)
 		if err != nil {
 			return nil, err
 		}
@@ -180,7 +188,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.TypeName = "fixarray"
 		obj.Length = uint32(firstbyte & 0xf)
 		obj.DataStr = "(fixarray)"
-		err := obj.SetCollection(buf, int(obj.Length))
+		err := obj.setCollection(buf, int(obj.Length))
 		if err != nil {
 			return nil, err
 		}
@@ -195,12 +203,12 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.Raw = append(obj.Raw, bufs...)
 	case isFixExt(firstbyte):
 		obj.TypeName = typeStr[firstbyte]
-		err := obj.SetExtType(buf)
+		err := obj.setExtType(buf)
 		if err != nil {
 			return nil, err
 		}
 		data := buf.Next(1 << uint(firstbyte-FixExt1Format))
-		if !obj.SetRegisteredExt(data) {
+		if !obj.setRegisteredExt(data) {
 			obj.DataStr = fmt.Sprintf("0x%x", data)
 		}
 		obj.Raw = append(obj.Raw, data...)
@@ -222,13 +230,13 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.Raw = append(obj.Raw, length...)
 
 		/* type */
-		err := obj.SetExtType(buf)
+		err := obj.setExtType(buf)
 		if err != nil {
 			return nil, err
 		}
 
 		data := buf.Next(int(obj.Length))
-		if !obj.SetRegisteredExt(data) {
+		if !obj.setRegisteredExt(data) {
 			obj.DataStr = fmt.Sprintf("0x%x", data)
 		}
 		obj.Raw = append(obj.Raw, data...)
@@ -247,25 +255,25 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			/* Uint family*/
 		case Uint8Format:
-			obj.SetNum(1, buf, func(b []byte) string {
+			obj.setNum(1, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", uint8(b[0]))
 			})
 		case Uint16Format:
-			obj.SetNum(2, buf, func(b []byte) string {
+			obj.setNum(2, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", (binary.BigEndian.Uint16(b)))
 			})
 		case Uint32Format:
-			obj.SetNum(4, buf, func(b []byte) string {
+			obj.setNum(4, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", (binary.BigEndian.Uint32(b)))
 			})
 		case Uint64Format:
-			obj.SetNum(8, buf, func(b []byte) string {
+			obj.setNum(8, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", (binary.BigEndian.Uint64(b)))
 			})
 
 			/* Int family */
 		case Int8Format:
-			obj.SetNum(1, buf, func(b []byte) string {
+			obj.setNum(1, buf, func(b []byte) string {
 				var v int8
 				if binary.Read(bytes.NewReader(b), binary.BigEndian, &v) != nil {
 					return ""
@@ -273,7 +281,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 				return fmt.Sprintf("%d", v)
 			})
 		case Int16Format:
-			obj.SetNum(2, buf, func(b []byte) string {
+			obj.setNum(2, buf, func(b []byte) string {
 				var v int16
 				if binary.Read(bytes.NewReader(b), binary.BigEndian, &v) != nil {
 					return ""
@@ -281,7 +289,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 				return fmt.Sprintf("%d", v)
 			})
 		case Int32Format:
-			obj.SetNum(4, buf, func(b []byte) string {
+			obj.setNum(4, buf, func(b []byte) string {
 				var v int32
 				if binary.Read(bytes.NewReader(b), binary.BigEndian, &v) != nil {
 					return ""
@@ -289,7 +297,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 				return fmt.Sprintf("%d", v)
 			})
 		case Int64Format:
-			obj.SetNum(8, buf, func(b []byte) string {
+			obj.setNum(8, buf, func(b []byte) string {
 				var v int64
 				if binary.Read(bytes.NewReader(b), binary.BigEndian, &v) != nil {
 					return ""
@@ -297,7 +305,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 				return fmt.Sprintf("%d", v)
 			})
 		case Float32Format:
-			obj.SetNum(4, buf, func(b []byte) string {
+			obj.setNum(4, buf, func(b []byte) string {
 				var v float32
 				if binary.Read(bytes.NewReader(b), binary.BigEndian, &v) != nil {
 					return ""
@@ -305,7 +313,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 				return fmt.Sprintf("%f", v)
 			})
 		case Float64Format:
-			obj.SetNum(8, buf, func(b []byte) string {
+			obj.setNum(8, buf, func(b []byte) string {
 				var v float64
 				if binary.Read(bytes.NewReader(b), binary.BigEndian, &v) != nil {
 					return ""
@@ -370,7 +378,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			obj.Length = uint32(binary.BigEndian.Uint16(length))
 			obj.DataStr = "(array 16)"
-			err := obj.SetCollection(buf, int(obj.Length))
+			err := obj.setCollection(buf, int(obj.Length))
 			if err != nil {
 				return nil, err
 			}
@@ -380,7 +388,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 			obj.Raw = append(obj.Raw, length...)
 			obj.Length = binary.BigEndian.Uint32(length)
 			obj.DataStr = "(array 32)"
-			err := obj.SetCollection(buf, int(obj.Length))
+			err := obj.setCollection(buf, int(obj.Length))
 			if err != nil {
 				return nil, err
 			}
@@ -391,7 +399,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			obj.Length = uint32(binary.BigEndian.Uint16(length))
 			obj.DataStr = "(map 16)"
-			err := obj.SetCollection(buf, int(obj.Length)*2)
+			err := obj.setCollection(buf, int(obj.Length)*2)
 			if err != nil {
 				return nil, err
 			}
@@ -402,7 +410,7 @@ func Decode(buf *bytes.Buffer) (*MPObject, error) {
 
 			obj.Length = binary.BigEndian.Uint32(length)
 			obj.DataStr = "(map 32)"
-			err := obj.SetCollection(buf, int(obj.Length)*2)
+			err := obj.setCollection(buf, int(obj.Length)*2)
 			if err != nil {
 				return nil, err
 			}
