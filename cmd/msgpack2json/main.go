@@ -16,22 +16,70 @@
 
 package main
 
-import(
+import (
+	"../../msgpack" /* TODO */
+	"bytes"
+	"flag"
+	"fmt"
+	"github.com/mattn/go-isatty"
+	"io"
+	"io/ioutil"
 	"os"
-    "io"
-    "bytes"
-    "fmt"
-    "io/ioutil"
-    "github.com/mattn/go-isatty"
-    "../../msgpack" /* TODO */
 )
+
+func readStdin(b_filename *bool) int {
+	if !isatty.IsTerminal(os.Stdin.Fd()) {
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			return 1
+		}
+		ret, err := msgpack.Decode(bytes.NewBuffer(b))
+		if err != nil {
+			return 1
+		}
+		if *b_filename {
+			fmt.Fprintf(os.Stdout, "(stdin): ")
+		}
+		outputJSON(ret, os.Stdout, 0)
+		fmt.Fprintf(os.Stdout, "\n")
+	}
+	return 0
+}
+
+func readFiles(b_filename *bool) {
+	if flag.NArg() > 0 {
+		for _, v := range flag.Args() {
+			file, err := os.Open(v)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "os.Open :%v\n", err)
+				continue
+			}
+			defer file.Close()
+			b, err := ioutil.ReadAll(file)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "ioutil.ReadAll :%v\n", err)
+				continue
+			}
+			ret, err := msgpack.Decode(bytes.NewBuffer(b))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", err)
+			}
+			if *b_filename {
+				fmt.Fprintf(os.Stdout, "%s: ", v)
+			}
+			outputJSON(ret, os.Stdout, 0)
+			fmt.Fprintf(os.Stdout, "\n")
+		}
+	}
+}
 
 func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	switch {
 	case msgpack.IsMap(obj.FirstByte):
 		fmt.Fprintf(out, "{")
 		var i uint32
-		for i = 0; i < obj.Length-1; i++{
+		for i = 0; i < obj.Length-1; i++ {
 			/* key */
 			outputJSON(obj.Child[i*2], out, nest+1)
 			fmt.Fprintf(out, ":")
@@ -45,34 +93,32 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	case msgpack.IsArray(obj.FirstByte):
 		fmt.Fprintf(out, "[")
 		var i uint32
-		for i =0 ; i< obj.Length-1; i++ {
+		for i = 0; i < obj.Length-1; i++ {
 			outputJSON(obj.Child[i], out, nest+1)
 			fmt.Fprintf(out, ",")
 		}
 		outputJSON(obj.Child[obj.Length-1], out, nest+1)
 		fmt.Fprintf(out, "]")
 	case msgpack.IsString(obj.FirstByte):
-		fmt.Fprintf(out,"\"%s\"", obj.DataStr)
+		fmt.Fprintf(out, "\"%s\"", obj.DataStr)
 	default:
 		fmt.Fprintf(out, obj.DataStr)
 	}
 }
 
 func cmdMain() int {
-	var b []byte
+	b_filename := flag.Bool("f", false, "print file name")
+	flag.Parse()
 
-	if !isatty.IsTerminal(os.Stdin.Fd()) {
-		b, _ = ioutil.ReadAll(os.Stdin)
-	}
 	msgpack.Init()
 
-	ret, err := msgpack.Decode(bytes.NewBuffer(b))
-	outputJSON(ret, os.Stdout, 0)
+	/* from STDIN */
+	ret := readStdin(b_filename)
 
-	if err != nil {
-		return 1
-	}
-	return 0
+	/* from files */
+	readFiles(b_filename)
+
+	return ret
 }
 
 func main() {
