@@ -79,51 +79,78 @@ func IsString(b byte) bool {
 	return (isFixStr(b) || (b >= Str8Format && b <= Str32Format))
 }
 
-var typeStr map[byte]string
-
 func Init() {
-	typeNameInit()
 	extFormatInit()
 }
 
-func typeNameInit() {
-	if len(typeStr) != 0 {
-		return
+func typeStr(b byte) string {
+	switch b {
+	case NilFormat:
+		return "nil"
+	case NeverUsedFormat:
+		return "(never used)"
+	case FalseFormat:
+		return "false"
+	case TrueFormat:
+		return "true"
+	case Bin8Format:
+		return "bin 8"
+	case Bin16Format:
+		return "bin 16"
+	case Bin32Format:
+		return "bin 32"
+	case Ext8Format:
+		return "ext 8"
+	case Ext16Format:
+		return "ext 16"
+	case Ext32Format:
+		return "ext 32"
+	case Float32Format:
+		return "float 32"
+	case Float64Format:
+		return "float 64"
+	case Uint8Format:
+		return "uint 8"
+	case Uint16Format:
+		return "uint 16"
+	case Uint32Format:
+		return "uint 32"
+	case Uint64Format:
+		return "uint 64"
+	case Int8Format:
+		return "int 8"
+	case Int16Format:
+		return "int 16"
+	case Int32Format:
+		return "int 32"
+	case Int64Format:
+		return "int 64"
+	case FixExt1Format:
+		return "fixext 1"
+	case FixExt2Format:
+		return "fixext 2"
+	case FixExt4Format:
+		return "fixext 4"
+	case FixExt8Format:
+		return "fixext 8"
+	case FixExt16Format:
+		return "fixext 16"
+	case Str8Format:
+		return "str 8"
+	case Str16Format:
+		return "str 16"
+	case Str32Format:
+		return "str 32"
+	case Array16Format:
+		return "array 16"
+	case Array32Format:
+		return "array 32"
+	case Map16Format:
+		return "map 16"
+	case Map32Format:
+		return "map 32"
 	}
-	typeStr = map[byte]string{}
-
-	typeStr[NilFormat] = "nil"
-	typeStr[NeverUsedFormat] = "(never used)"
-	typeStr[FalseFormat] = "false"
-	typeStr[TrueFormat] = "true"
-	typeStr[Bin8Format] = "bin 8"
-	typeStr[Bin16Format] = "bin 16"
-	typeStr[Bin32Format] = "bin 32"
-	typeStr[Ext8Format] = "ext 8"
-	typeStr[Ext16Format] = "ext 16"
-	typeStr[Ext32Format] = "ext 32"
-	typeStr[Float32Format] = "float 32"
-	typeStr[Float64Format] = "float 64"
-	typeStr[Uint8Format] = "uint 8"
-	typeStr[Uint16Format] = "uint 16"
-	typeStr[Uint32Format] = "uint 32"
-	typeStr[Uint64Format] = "uint 64"
-	typeStr[Int8Format] = "int 8"
-	typeStr[Int16Format] = "int 16"
-	typeStr[Int32Format] = "int 32"
-	typeStr[Int64Format] = "int 64"
-	typeStr[FixExt1Format] = "fixext 1"
-	typeStr[FixExt2Format] = "fixext 2"
-	typeStr[FixExt4Format] = "fixext 4"
-	typeStr[FixExt8Format] = "fixext 8"
-	typeStr[FixExt16Format] = "fixext 16"
-	typeStr[Str8Format] = "str 8"
-	typeStr[Str16Format] = "str 16"
-	typeStr[Str32Format] = "str 32"
-	typeStr[Array16Format] = "array 16"
-	typeStr[Array32Format] = "array 32"
-	typeStr[Map16Format] = "map 16"
-	typeStr[Map32Format] = "map 32"
+	return ""
 }
 
 type MPObject struct {
@@ -202,7 +229,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.DataStr = string(bufs)
 		obj.Raw = append(obj.Raw, bufs...)
 	case isFixExt(firstbyte):
-		obj.TypeName = typeStr[firstbyte]
+		obj.TypeName = typeStr(firstbyte)
 		err := obj.setExtType(buf)
 		if err != nil {
 			return nil, err
@@ -213,7 +240,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		}
 		obj.Raw = append(obj.Raw, data...)
 	case isExt(firstbyte):
-		obj.TypeName = typeStr[firstbyte]
+		obj.TypeName = typeStr(firstbyte)
 		var length []byte
 		/* length */
 		switch firstbyte {
@@ -242,7 +269,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.Raw = append(obj.Raw, data...)
 
 	default:
-		obj.TypeName = typeStr[firstbyte]
+		obj.TypeName = typeStr(firstbyte)
 		switch firstbyte {
 		case NilFormat:
 			obj.DataStr = "nil"
@@ -252,7 +279,6 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			obj.DataStr = "true"
 		case FalseFormat:
 			obj.DataStr = "false"
-
 			/* Uint family*/
 		case Uint8Format:
 			obj.setNum(1, buf, func(b []byte) string {
