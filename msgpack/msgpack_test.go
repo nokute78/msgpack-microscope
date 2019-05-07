@@ -15,8 +15,7 @@ func TestDecode(t *testing.T) {
 		obj      *MPObject
 	}
 
-	typeNameInit()
-	extFormatInit()
+	Init()
 
 	cases := []testcase{
 		{"p fixint", []byte{0x01}, &MPObject{DataStr: "1", TypeName: "positive fixint"}},
@@ -141,8 +140,7 @@ func TestNestedMap(t *testing.T) {
 	/* {"0":"0", "1":{"2":"2", "3":"3", "4":"4"}} in JSON */
 	b := []byte{0x82, 0xa1, 0x30, 0xa1, 0x30, 0xa1, 0x31, 0x83, 0xa1, 0x32, 0xa1, 0x32, 0xa1, 0x33, 0xa1, 0x33, 0xa1, 0x34, 0xa1, 0x34}
 
-	typeNameInit()
-	extFormatInit()
+	Init()
 
 	ret, err := Decode(bytes.NewBuffer(b))
 	if err != nil && err != io.EOF {
@@ -179,6 +177,45 @@ func BenchmarkDecode(b *testing.B) {
 		_, err := Decode(bytes.NewBuffer(benchData))
 		if err != nil && err != io.EOF {
 			b.Errorf("Decode error %s", err)
+		}
+	}
+}
+
+func TestIsArray(t *testing.T) {
+	var i uint
+
+	for i = 0; i <= 0xff; i++ {
+		ok := IsArray(byte(i))
+		if ok && ((i < 0x90 && i > 0x9f) && i != 0xdc && i != 0xdd) {
+			t.Errorf("IsArray Error! 0x%x is not Array", i)
+		} else if !ok && ((i >= 0x90 && i <= 0x9f) || i == 0xdc || i == 0xdd) {
+			t.Errorf("IsArray Error! 0x%x is Array", i)
+		}
+	}
+}
+
+func TestIsMap(t *testing.T) {
+	var i uint
+
+	for i = 0; i <= 0xff; i++ {
+		ok := IsMap(byte(i))
+		if ok && ((i < 0x80 && i > 0x8f) && i != 0xde && i != 0xdf) {
+			t.Errorf("IsMap Error! 0x%x is not Map", i)
+		} else if !ok && ((i >= 0x80 && i <= 0x8f) || i == 0xde || i == 0xdf) {
+			t.Errorf("IsMap Error! 0x%x is Map", i)
+		}
+	}
+}
+
+func TestIsString(t *testing.T) {
+	var i uint
+
+	for i = 0; i <= 0xff; i++ {
+		ok := IsString(byte(i))
+		if ok && ((i < 0xa0 && i > 0xbf) && (i < 0xd9 && i > 0xdb)) {
+			t.Errorf("IsString Error! 0x%x is not String", i)
+		} else if !ok && ((i >= 0xa0 && i <= 0xbf) || (i >= 0xd9 && i <= 0xdb)) {
+			t.Errorf("IsString Error! 0x%x is String", i)
 		}
 	}
 }

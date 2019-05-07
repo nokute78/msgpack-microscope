@@ -69,7 +69,22 @@ func isExt(b byte) bool {
 	return (b >= 0xc7 && b <= 0xc9)
 }
 
+func IsArray(b byte) bool {
+	return (isFixArray(b) || b == Array16Format || b == Array32Format)
+}
+func IsMap(b byte) bool {
+	return (isFixMap(b) || b == Map16Format || b == Map32Format)
+}
+func IsString(b byte) bool {
+	return (isFixStr(b) || (b >= Str8Format && b <= Str32Format))
+}
+
 var typeStr map[byte]string
+
+func Init() {
+	typeNameInit()
+	extFormatInit()
+}
 
 func typeNameInit() {
 	typeStr = map[byte]string{}
