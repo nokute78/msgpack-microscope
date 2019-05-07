@@ -27,22 +27,29 @@ import (
 	"os"
 )
 
+func decodeAndOutput(in io.Reader, out io.Writer, file string, b_filename *bool) int {
+	b, err := ioutil.ReadAll(in)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ioutil.ReadAll :%v\n", err)
+		return 1
+	}
+	ret, err := msgpack.Decode(bytes.NewBuffer(b))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		return 1
+	}
+	if *b_filename {
+		fmt.Fprintf(out, "%s: ", file)
+	}
+	outputJSON(ret, out, 0)
+	fmt.Fprintf(out, "\n")
+
+	return 0
+}
+
 func readStdin(b_filename *bool) int {
 	if !isatty.IsTerminal(os.Stdin.Fd()) {
-		b, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			return 1
-		}
-		ret, err := msgpack.Decode(bytes.NewBuffer(b))
-		if err != nil {
-			return 1
-		}
-		if *b_filename {
-			fmt.Fprintf(os.Stdout, "(stdin): ")
-		}
-		outputJSON(ret, os.Stdout, 0)
-		fmt.Fprintf(os.Stdout, "\n")
+		return decodeAndOutput(os.Stdin, os.Stdout, "(stdin)", b_filename)
 	}
 	return 0
 }
@@ -56,20 +63,9 @@ func readFiles(b_filename *bool) {
 				continue
 			}
 			defer file.Close()
-			b, err := ioutil.ReadAll(file)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "ioutil.ReadAll :%v\n", err)
+			if decodeAndOutput(file, os.Stdout, v, b_filename) != 0 {
 				continue
 			}
-			ret, err := msgpack.Decode(bytes.NewBuffer(b))
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "%s\n", err)
-			}
-			if *b_filename {
-				fmt.Fprintf(os.Stdout, "%s: ", v)
-			}
-			outputJSON(ret, os.Stdout, 0)
-			fmt.Fprintf(os.Stdout, "\n")
 		}
 	}
 }
