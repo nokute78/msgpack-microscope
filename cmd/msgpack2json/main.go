@@ -141,7 +141,7 @@ func registerFluentdEventTime() {
 }
 
 func cmdMain() int {
-	var ret int = 1
+	ret := 1
 
 	showFileName := flag.Bool("f", false, "print file name")
 	serverMode := flag.Bool("s", false, "http server mode")
