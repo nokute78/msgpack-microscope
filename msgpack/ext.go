@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-type extFormat struct {
+type ExtFormat struct {
 	ExtType    int8
 	TypeName   string
 	DecodeFunc func([]byte) string
@@ -57,9 +57,9 @@ func timestamp96(b []byte) string {
 	return fmt.Sprintf("%v", time.Unix(sec, nsec))
 }
 
-var extFormats map[byte]([]*extFormat)
+var extFormats map[byte]([]*ExtFormat)
 
-func RegisterExt(b byte, ext *extFormat) {
+func RegisterExt(b byte, ext *ExtFormat) {
 	extFormats[b] = append(extFormats[b], ext)
 }
 
@@ -67,11 +67,11 @@ func extFormatInit() {
 	if len(extFormats) != 0 {
 		return
 	}
-	extFormats = map[byte]([]*extFormat){}
+	extFormats = map[byte]([]*ExtFormat){}
 
-	RegisterExt(FixExt4Format, &extFormat{ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32})
-	RegisterExt(FixExt8Format, &extFormat{ExtType: -1, TypeName: "timestamp 64", DecodeFunc: timestamp64})
-	RegisterExt(Ext8Format, &extFormat{ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
+	RegisterExt(FixExt4Format, &ExtFormat{ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32})
+	RegisterExt(FixExt8Format, &ExtFormat{ExtType: -1, TypeName: "timestamp 64", DecodeFunc: timestamp64})
+	RegisterExt(Ext8Format, &ExtFormat{ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
 }
 
 func (obj *MPObject) setExtType(buf *bytes.Buffer) error {
