@@ -51,15 +51,7 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, showFileName bool
 
 func readHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		/*
-			b, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Request Error: %s\n",err)
-				return
-			}
-			fmt.Fprintf(os.Stdout, "%v", b)
-		*/
-		decodeAndOutput(req.Body, os.Stdout, fmt.Sprintf("%v", time.Now), false)
+		decodeAndOutput(req.Body, os.Stdout, time.Now().Format(time.UnixDate), true)
 	}
 }
 
