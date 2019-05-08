@@ -17,7 +17,7 @@
 package main
 
 import (
-	"../../msgpack" /* TODO */
+	"../../pkg/msgpack" /* TODO */
 	"bytes"
 	"flag"
 	"fmt"
