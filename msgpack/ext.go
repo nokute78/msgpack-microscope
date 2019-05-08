@@ -57,7 +57,29 @@ func timestamp96(b []byte) string {
 	return fmt.Sprintf("%v", time.Unix(sec, nsec))
 }
 
+/* Fluentd EventTime Ext Format */
+/* https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1 */
+func extEventTimeV1(b []byte) string {
+	if len(b) != 8 {
+		return ""
+	}
+	var sec int32
+	if binary.Read(bytes.NewReader(b[:4]), binary.BigEndian, &sec) != nil {
+		return ""
+	}
+	var nsec int32
+	if binary.Read(bytes.NewReader(b[4:]), binary.BigEndian, &nsec) != nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", time.Unix(int64(sec), int64(nsec)))
+}
+
 var extFormats map[byte]([]*ExtFormat)
+
+func RegisterFluentdEventTime() {
+	RegisterExt(FixExt8Format, &ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
+	RegisterExt(Ext8Format, &ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
+}
 
 func RegisterExt(b byte, ext *ExtFormat) {
 	extFormats[b] = append(extFormats[b], ext)

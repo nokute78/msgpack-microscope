@@ -51,5 +51,27 @@ func TestTimestampExt(t *testing.T) {
 	if tm96.DataStr != timestr {
 		t.Errorf("tm96 error. \"%s\" is not %s", tm96.DataStr, timestr)
 	}
+}
 
+func TestFluentdEventTime(t *testing.T) {
+	Init()
+	RegisterFluentdEventTime()
+
+	fixext8 := &MPObject{FirstByte: 0xd7, ExtType: 0}
+	if !fixext8.setRegisteredExt([]byte{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01}) {
+		t.Errorf("fixext8.setRegisteredExt Failed")
+	}
+	timestr := fmt.Sprintf("%v", time.Unix(1, 1))
+	if fixext8.DataStr != timestr {
+		t.Errorf("fixext8 error. \"%s\" is not %s", fixext8.DataStr, timestr)
+	}
+
+	ext8 := &MPObject{FirstByte: 0xc7, ExtType: 0}
+	if !ext8.setRegisteredExt([]byte{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01}) {
+		t.Errorf("ext8.setRegisteredExt Failed")
+	}
+	timestr = fmt.Sprintf("%v", time.Unix(1, 1))
+	if ext8.DataStr != timestr {
+		t.Errorf("ext8 error. \"%s\" is not %s", ext8.DataStr, timestr)
+	}
 }
