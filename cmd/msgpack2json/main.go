@@ -24,10 +24,12 @@ import (
 	"github.com/mattn/go-isatty"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"time"
 )
 
-func decodeAndOutput(in io.Reader, out io.Writer, file string, b_filename *bool) int {
+func decodeAndOutput(in io.Reader, out io.Writer, file string, showFileName bool) int {
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ioutil.ReadAll :%v\n", err)
@@ -38,7 +40,7 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, b_filename *bool)
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		return 1
 	}
-	if *b_filename {
+	if showFileName {
 		fmt.Fprintf(out, "%s: ", file)
 	}
 	outputJSON(ret, out, 0)
@@ -47,14 +49,35 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, b_filename *bool)
 	return 0
 }
 
-func readStdin(b_filename *bool) int {
+func readHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		/*
+			b, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Request Error: %s\n",err)
+				return
+			}
+			fmt.Fprintf(os.Stdout, "%v", b)
+		*/
+		decodeAndOutput(req.Body, os.Stdout, fmt.Sprintf("%v", time.Now), false)
+	}
+}
+
+func readHttp(pnum uint) int {
+	http.HandleFunc("/", readHTTP)
+
+	fmt.Fprintf(os.Stderr, "%s", http.ListenAndServe(fmt.Sprintf(":%d", pnum), nil))
+	return 0
+}
+
+func readStdin(showFileName bool) int {
 	if !isatty.IsTerminal(os.Stdin.Fd()) {
-		return decodeAndOutput(os.Stdin, os.Stdout, "(stdin)", b_filename)
+		return decodeAndOutput(os.Stdin, os.Stdout, "(stdin)", showFileName)
 	}
 	return 0
 }
 
-func readFiles(b_filename *bool) {
+func readFiles(showFileName bool) {
 	if flag.NArg() > 0 {
 		for _, v := range flag.Args() {
 			file, err := os.Open(v)
@@ -63,7 +86,7 @@ func readFiles(b_filename *bool) {
 				continue
 			}
 			defer file.Close()
-			if decodeAndOutput(file, os.Stdout, v, b_filename) != 0 {
+			if decodeAndOutput(file, os.Stdout, v, showFileName) != 0 {
 				continue
 			}
 		}
@@ -103,16 +126,26 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 }
 
 func cmdMain() int {
-	b_filename := flag.Bool("f", false, "print file name")
+	var ret int = 1
+
+	showFileName := flag.Bool("f", false, "print file name")
+	serverMode := flag.Bool("s", false, "http server mode")
+	serverPort := flag.Uint("p", 8080, "port number for server mode")
+
 	flag.Parse()
 
 	msgpack.Init()
 
-	/* from STDIN */
-	ret := readStdin(b_filename)
+	if *serverMode {
+		ret = readHttp(*serverPort)
+	} else {
 
-	/* from files */
-	readFiles(b_filename)
+		/* from STDIN */
+		ret = readStdin(*showFileName)
+
+		/* from files */
+		readFiles(*showFileName)
+	}
 
 	return ret
 }
