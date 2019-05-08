@@ -19,6 +19,7 @@ package main
 import (
 	"../../msgpack" /* TODO */
 	"bytes"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"github.com/mattn/go-isatty"
@@ -117,16 +118,43 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	}
 }
 
+/* Fluentd EventTime Ext Format */
+/* https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1 */
+func extEventTimeV1(b []byte) string {
+	if len(b) != 8 {
+		return ""
+	}
+	var sec int32
+	if binary.Read(bytes.NewReader(b[:4]), binary.BigEndian, &sec) != nil {
+		return ""
+	}
+	var nsec int32
+	if binary.Read(bytes.NewReader(b[4:]), binary.BigEndian, &nsec) != nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", time.Unix(int64(sec), int64(nsec)))
+}
+
+func registerFluentdEventTime() {
+	msgpack.RegisterExt(msgpack.FixExt8Format, &msgpack.ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
+	msgpack.RegisterExt(msgpack.Ext8Format, &msgpack.ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
+}
+
 func cmdMain() int {
 	var ret int = 1
 
 	showFileName := flag.Bool("f", false, "print file name")
 	serverMode := flag.Bool("s", false, "http server mode")
+	eventTime := flag.Bool("e", false, "support fluentd event time ext format")
 	serverPort := flag.Uint("p", 8080, "port number for server mode")
 
 	flag.Parse()
 
 	msgpack.Init()
+
+	if *eventTime {
+		registerFluentdEventTime()
+	}
 
 	if *serverMode {
 		ret = readHttp(*serverPort)
