@@ -17,16 +17,17 @@
 package main
 
 import (
-	"../../pkg/msgpack" /* TODO */
 	"bytes"
 	"flag"
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/mattn/go-isatty"
+	"github.com/nokute78/msgpack2txt/pkg/msgpack"
 )
 
 func decodeAndOutput(in io.Reader, out io.Writer, file string, showFileName bool) int {
