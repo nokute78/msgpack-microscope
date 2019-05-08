@@ -41,15 +41,15 @@ func timestamp64(b []byte) string {
 		return ""
 	}
 	raw := binary.BigEndian.Uint64(b)
-	var sec int64 = int64(raw & 0x3FFFFFFFF)
-	var nsec int64 = int64((raw & 0xFFFFFFFC00000000) >> 34)
+	sec := int64(raw & 0x3FFFFFFFF)
+	nsec := int64((raw & 0xFFFFFFFC00000000) >> 34)
 	return fmt.Sprintf("%v", time.Unix(sec, nsec))
 }
 func timestamp96(b []byte) string {
 	if len(b) != 12 {
 		return ""
 	}
-	var nsec int64 = int64(binary.BigEndian.Uint32(b[0:4]))
+	nsec := int64(binary.BigEndian.Uint32(b[0:4]))
 	var sec int64
 	if binary.Read(bytes.NewReader(b[4:]), binary.BigEndian, &sec) != nil {
 		return ""
