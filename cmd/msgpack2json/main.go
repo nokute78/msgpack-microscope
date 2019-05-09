@@ -30,7 +30,14 @@ import (
 	"github.com/nokute78/msgpack2txt/pkg/msgpack"
 )
 
-func decodeAndOutput(in io.Reader, out io.Writer, file string, showFileName bool) int {
+type config struct {
+	showSource bool
+	serverMode bool
+	eventTime  bool
+	serverPort uint
+}
+
+func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int {
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ioutil.ReadAll :%v\n", err)
@@ -41,7 +48,7 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, showFileName bool
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		return 1
 	}
-	if showFileName {
+	if cnf.showSource {
 		fmt.Fprintf(out, "%s: ", file)
 	}
 	outputJSON(ret, out, 0)
@@ -52,25 +59,25 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, showFileName bool
 
 func readHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		decodeAndOutput(req.Body, os.Stdout, time.Now().Format(time.UnixDate), true)
+		decodeAndOutput(req.Body, os.Stdout, time.Now().Format(time.UnixDate), &config{showSource:true})
 	}
 }
 
-func readHttp(pnum uint) int {
+func readHttp(cnf *config) int {
 	http.HandleFunc("/", readHTTP)
 
-	fmt.Fprintf(os.Stderr, "%s", http.ListenAndServe(fmt.Sprintf(":%d", pnum), nil))
+	fmt.Fprintf(os.Stderr, "%s", http.ListenAndServe(fmt.Sprintf(":%d", cnf.serverPort), nil))
 	return 0
 }
 
-func readStdin(showFileName bool) int {
+func readStdin(cnf *config) int {
 	if !isatty.IsTerminal(os.Stdin.Fd()) {
-		return decodeAndOutput(os.Stdin, os.Stdout, "(stdin)", showFileName)
+		return decodeAndOutput(os.Stdin, os.Stdout, "(stdin)", cnf)
 	}
 	return 0
 }
 
-func readFiles(showFileName bool) {
+func readFiles(cnf *config) {
 	if flag.NArg() > 0 {
 		for _, v := range flag.Args() {
 			file, err := os.Open(v)
@@ -79,7 +86,7 @@ func readFiles(showFileName bool) {
 				continue
 			}
 			defer file.Close()
-			if decodeAndOutput(file, os.Stdout, v, showFileName) != 0 {
+			if decodeAndOutput(file, os.Stdout, v, cnf) != 0 {
 				continue
 			}
 		}
@@ -121,28 +128,30 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 func cmdMain() int {
 	ret := 1
 
-	showFileName := flag.Bool("f", false, "print file name")
-	serverMode := flag.Bool("s", false, "http server mode")
-	eventTime := flag.Bool("e", false, "support fluentd event time ext format")
-	serverPort := flag.Uint("p", 8080, "port number for server mode")
+	config := config{}
+
+	flag.BoolVar(&config.showSource, "f", false, "print data source")
+	flag.BoolVar(&config.serverMode, "s", false, "http server mode")
+	flag.BoolVar(&config.eventTime,"e", false, "support fluentd event time ext format")
+	flag.UintVar(&config.serverPort,"p", 8080, "port number for server mode")
 
 	flag.Parse()
 
 	msgpack.Init()
 
-	if *eventTime {
+	if config.eventTime {
 		msgpack.RegisterFluentdEventTime()
 	}
 
-	if *serverMode {
-		ret = readHttp(*serverPort)
+	if config.serverMode {
+		ret = readHttp(&config)
 	} else {
 
 		/* from STDIN */
-		ret = readStdin(*showFileName)
+		ret = readStdin(&config)
 
 		/* from files */
-		readFiles(*showFileName)
+		readFiles(&config)
 	}
 
 	return ret
