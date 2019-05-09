@@ -87,9 +87,9 @@ func readStdin(cnf *config) int {
 	return 0
 }
 
-func readFiles(cnf *config) {
-	if flag.NArg() > 0 {
-		for _, v := range flag.Args() {
+func readFiles(files []string, cnf *config) {
+	if len(files) > 0 {
+		for _, v := range files {
 			file, err := os.Open(v)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "os.Open :%v\n", err)
@@ -106,32 +106,32 @@ func readFiles(cnf *config) {
 func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	switch {
 	case msgpack.IsMap(obj.FirstByte):
-		fmt.Fprintf(out, "{")
+		fmt.Fprint(out, "{")
 		var i uint32
 		for i = 0; i < obj.Length-1; i++ {
 			/* key */
 			outputJSON(obj.Child[i*2], out, nest+1)
-			fmt.Fprintf(out, ":")
+			fmt.Fprint(out, ":")
 			outputJSON(obj.Child[i*2+1], out, nest+1)
-			fmt.Fprintf(out, ",")
+			fmt.Fprint(out, ",")
 		}
 		outputJSON(obj.Child[(obj.Length-1)*2], out, nest+1)
-		fmt.Fprintf(out, ":")
+		fmt.Fprint(out, ":")
 		outputJSON(obj.Child[(obj.Length-1)*2+1], out, nest+1)
-		fmt.Fprintf(out, "}")
+		fmt.Fprint(out, "}")
 	case msgpack.IsArray(obj.FirstByte):
-		fmt.Fprintf(out, "[")
+		fmt.Fprint(out, "[")
 		var i uint32
 		for i = 0; i < obj.Length-1; i++ {
 			outputJSON(obj.Child[i], out, nest+1)
-			fmt.Fprintf(out, ",")
+			fmt.Fprint(out, ",")
 		}
 		outputJSON(obj.Child[obj.Length-1], out, nest+1)
-		fmt.Fprintf(out, "]")
+		fmt.Fprint(out, "]")
 	case msgpack.IsString(obj.FirstByte):
 		fmt.Fprintf(out, "\"%s\"", obj.DataStr)
 	default:
-		fmt.Fprintf(out, obj.DataStr)
+		fmt.Fprint(out, obj.DataStr)
 	}
 }
 
@@ -161,7 +161,7 @@ func cmdMain() int {
 		ret = readStdin(&config)
 
 		/* from files */
-		readFiles(&config)
+		readFiles(flag.Args(), &config)
 	}
 
 	return ret
