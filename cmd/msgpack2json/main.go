@@ -37,6 +37,10 @@ type config struct {
 	serverPort uint
 }
 
+type serverHandler struct {
+	cnf *config
+}
+
 func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int {
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
@@ -57,16 +61,22 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int 
 	return 0
 }
 
-func readHTTP(w http.ResponseWriter, req *http.Request) {
+func (h *serverHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		decodeAndOutput(req.Body, os.Stdout, time.Now().Format(time.UnixDate), &config{showSource:true})
+		decodeAndOutput(req.Body, os.Stdout, time.Now().Format(time.UnixDate), h.cnf)
 	}
 }
 
-func readHttp(cnf *config) int {
-	http.HandleFunc("/", readHTTP)
+func readHTTP(cnf *config) int {
+	handler := &serverHandler{cnf: cnf}
+	s := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cnf.serverPort),
+		Handler:      handler,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	fmt.Fprintf(os.Stderr, "readHTTP error:%s", s.ListenAndServe())
 
-	fmt.Fprintf(os.Stderr, "%s", http.ListenAndServe(fmt.Sprintf(":%d", cnf.serverPort), nil))
 	return 0
 }
 
@@ -132,8 +142,8 @@ func cmdMain() int {
 
 	flag.BoolVar(&config.showSource, "f", false, "print data source")
 	flag.BoolVar(&config.serverMode, "s", false, "http server mode")
-	flag.BoolVar(&config.eventTime,"e", false, "support fluentd event time ext format")
-	flag.UintVar(&config.serverPort,"p", 8080, "port number for server mode")
+	flag.BoolVar(&config.eventTime, "e", false, "support fluentd event time ext format")
+	flag.UintVar(&config.serverPort, "p", 8080, "port number for server mode")
 
 	flag.Parse()
 
@@ -144,7 +154,7 @@ func cmdMain() int {
 	}
 
 	if config.serverMode {
-		ret = readHttp(&config)
+		ret = readHTTP(&config)
 	} else {
 
 		/* from STDIN */
