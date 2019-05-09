@@ -247,3 +247,16 @@ func TestIsString(t *testing.T) {
 		}
 	}
 }
+
+func TestIsExt(t *testing.T) {
+	var i uint
+
+	for i = 0; i <= 0xff; i++ {
+		ok := IsExt(byte(i))
+		if ok && ((i < 0xc7 && i > 0xc9) && (i < 0xd4 && i > 0xd8)) {
+			t.Errorf("IsExt Error! 0x%x is not Ext", i)
+		} else if !ok && ((i >= 0xc7 && i <= 0xc9) || (i >= 0xd4 && i <= 0xd8)) {
+			t.Errorf("IsExt Error! 0x%x is Ext", i)
+		}
+	}
+}

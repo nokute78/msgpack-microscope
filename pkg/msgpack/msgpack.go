@@ -85,14 +85,24 @@ func isExt(b byte) bool {
 	return (b >= 0xc7 && b <= 0xc9)
 }
 
+// IsArray reports whether the byte is array format family header.
 func IsArray(b byte) bool {
 	return (isFixArray(b) || b == Array16Format || b == Array32Format)
 }
+
+// IsMap reports whether the byte is map format family header.
 func IsMap(b byte) bool {
 	return (isFixMap(b) || b == Map16Format || b == Map32Format)
 }
+
+// IsString reports whether the byte is str format family header.
 func IsString(b byte) bool {
 	return (isFixStr(b) || (b >= Str8Format && b <= Str32Format))
+}
+
+// IsExt reports whether the byte is ext format family header.
+func IsExt(b byte) bool {
+	return (isExt(b) || isFixExt(b))
 }
 
 func Init() {
