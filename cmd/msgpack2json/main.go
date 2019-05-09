@@ -109,6 +109,17 @@ func readFiles(files []string, cnf *config) {
 	}
 }
 
+func outputVerboseKV(obj *msgpack.MPObject, i uint32, out io.Writer, nest int) {
+	spaces := strings.Repeat("    ", nest)
+
+	fmt.Fprintf(out, "%s{\"key\":\n", spaces)
+	outputVerboseJSON(obj.Child[i*2], out, nest+1)
+	fmt.Fprint(out, ",\n")
+	fmt.Fprintf(out, "%s \"value\":\n", spaces)
+	outputVerboseJSON(obj.Child[i*2+1], out, nest+1)
+	fmt.Fprintf(out, "\n%s}", spaces)
+}
+
 func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	spaces := strings.Repeat("    ", nest)
 
@@ -130,7 +141,6 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, "\n%s]\n%s}\n", spaces2, spaces)
 	case msgpack.IsMap(obj.FirstByte):
 		spaces2 := strings.Repeat("    ", nest+1)
-		spaces3 := strings.Repeat("    ", nest+2)
 		// map header info
 		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "length":%d, "raw":0x%0x, "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
 
@@ -138,19 +148,10 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
 		var i uint32
 		for i = 0; i < obj.Length-1; i++ {
-			fmt.Fprintf(out, "%s{\"key\":\n", spaces3)
-			outputVerboseJSON(obj.Child[i*2], out, nest+3)
+			outputVerboseKV(obj, i, out, nest+2)
 			fmt.Fprint(out, ",\n")
-			fmt.Fprintf(out, "%s \"value\":\n", spaces3)
-			outputVerboseJSON(obj.Child[i*2+1], out, nest+3)
-			fmt.Fprintf(out, "\n%s},\n", spaces3)
 		}
-		fmt.Fprintf(out, "%s{\"key\":\n", spaces3)
-		outputVerboseJSON(obj.Child[(obj.Length-1)*2], out, nest+3)
-		fmt.Fprint(out, ",\n")
-		fmt.Fprintf(out, "%s \"value\":\n", spaces3)
-		outputVerboseJSON(obj.Child[(obj.Length-1)*2+1], out, nest+3)
-		fmt.Fprintf(out, "\n%s}", spaces3)
+		outputVerboseKV(obj, obj.Length-1, out, nest+2)
 		fmt.Fprintf(out, "\n%s]\n%s}", spaces2, spaces)
 
 	case msgpack.IsString(obj.FirstByte):
