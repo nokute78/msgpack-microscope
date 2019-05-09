@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/mattn/go-isatty"
@@ -35,6 +36,7 @@ type config struct {
 	serverMode bool
 	eventTime  bool
 	serverPort uint
+	verbose    bool
 }
 
 type serverHandler struct {
@@ -55,7 +57,11 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int 
 	if cnf.showSource {
 		fmt.Fprintf(out, "%s: ", file)
 	}
-	outputJSON(ret, out, 0)
+	if cnf.verbose {
+		outputVerboseJSON(ret, out, 0)
+	} else {
+		outputJSON(ret, out, 0)
+	}
 	fmt.Fprintf(out, "\n")
 
 	return 0
@@ -103,6 +109,59 @@ func readFiles(files []string, cnf *config) {
 	}
 }
 
+func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
+	spaces := strings.Repeat("    ", nest)
+
+	switch {
+	case msgpack.IsArray(obj.FirstByte):
+		spaces2 := strings.Repeat("    ", nest+1)
+
+		// array header info
+		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "length":%d, "raw":0x%0x, "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+
+		// array body info
+		fmt.Fprintf(out, "\n%s[\n", spaces2)
+		var i uint32
+		for i = 0; i < obj.Length-1; i++ {
+			outputVerboseJSON(obj.Child[i], out, nest+2)
+			fmt.Fprintf(out, ",\n")
+		}
+		outputVerboseJSON(obj.Child[obj.Length-1], out, nest+2)
+		fmt.Fprintf(out, "\n%s]\n%s}\n", spaces2, spaces)
+	case msgpack.IsMap(obj.FirstByte):
+		spaces2 := strings.Repeat("    ", nest+1)
+		spaces3 := strings.Repeat("    ", nest+2)
+		// map header info
+		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "length":%d, "raw":0x%0x, "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+
+		// map body info
+		fmt.Fprintf(out, "\n%s[\n", spaces2)
+		var i uint32
+		for i = 0; i < obj.Length-1; i++ {
+			fmt.Fprintf(out, "%s{\"key\":\n", spaces3)
+			outputVerboseJSON(obj.Child[i*2], out, nest+3)
+			fmt.Fprintf(out, "\n%s},\n", spaces3)
+			fmt.Fprintf(out, "%s{\"value\":\n", spaces3)
+			outputVerboseJSON(obj.Child[i*2+1], out, nest+3)
+			fmt.Fprintf(out, "\n%s},\n", spaces3)
+		}
+		fmt.Fprintf(out, "%s{\"key\":\n", spaces3)
+		outputVerboseJSON(obj.Child[(obj.Length-1)*2], out, nest+3)
+		fmt.Fprintf(out, "\n%s},\n", spaces3)
+		fmt.Fprintf(out, "%s{\"value\":\n", spaces3)
+		outputVerboseJSON(obj.Child[(obj.Length-1)*2+1], out, nest+3)
+		fmt.Fprintf(out, "\n%s}", spaces3)
+		fmt.Fprintf(out, "\n%s]\n%s}", spaces2, spaces)
+
+	case msgpack.IsString(obj.FirstByte):
+		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "raw":0x%0x, "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+	case msgpack.IsExt(obj.FirstByte):
+		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "type":%d, "raw":0x%0x, "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
+	default:
+		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "raw":0x%0x, "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+	}
+}
+
 func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	switch {
 	case msgpack.IsMap(obj.FirstByte):
@@ -142,6 +201,7 @@ func cmdMain() int {
 
 	flag.BoolVar(&config.showSource, "f", false, "print data source")
 	flag.BoolVar(&config.serverMode, "s", false, "http server mode")
+	flag.BoolVar(&config.verbose, "v", false, "verbose mode")
 	flag.BoolVar(&config.eventTime, "e", false, "support fluentd event time ext format")
 	flag.UintVar(&config.serverPort, "p", 8080, "port number for server mode")
 
