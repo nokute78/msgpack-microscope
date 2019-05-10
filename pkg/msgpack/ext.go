@@ -25,6 +25,7 @@ import (
 
 // ExtFormat represents Ext Format.
 type ExtFormat struct {
+	FirstByte  byte
 	ExtType    int8
 	TypeName   string
 	DecodeFunc func([]byte) string
@@ -81,14 +82,13 @@ var extFormats map[byte]([]*ExtFormat)
 // RegisterFluentdEventTime registers Fluentd ext timestamp format.
 // https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1 */
 func RegisterFluentdEventTime() {
-	RegisterExt(FixExt8Format, &ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
-	RegisterExt(Ext8Format, &ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
+	RegisterExt(&ExtFormat{FirstByte: FixExt8Format, ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
+	RegisterExt(&ExtFormat{FirstByte: Ext8Format, ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
 }
 
 // RegisterExt register user defined ext format.
-// b means Type of ext format.
-func RegisterExt(b byte, ext *ExtFormat) {
-	extFormats[b] = append(extFormats[b], ext)
+func RegisterExt(ext *ExtFormat) {
+	extFormats[ext.FirstByte] = append(extFormats[ext.FirstByte], ext)
 }
 
 func extFormatInit() {
@@ -97,9 +97,9 @@ func extFormatInit() {
 	}
 	extFormats = map[byte]([]*ExtFormat){}
 
-	RegisterExt(FixExt4Format, &ExtFormat{ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32})
-	RegisterExt(FixExt8Format, &ExtFormat{ExtType: -1, TypeName: "timestamp 64", DecodeFunc: timestamp64})
-	RegisterExt(Ext8Format, &ExtFormat{ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
+	RegisterExt(&ExtFormat{FirstByte: FixExt4Format, ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32})
+	RegisterExt(&ExtFormat{FirstByte: FixExt8Format, ExtType: -1, TypeName: "timestamp 64", DecodeFunc: timestamp64})
+	RegisterExt(&ExtFormat{FirstByte: Ext8Format, ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
 }
 
 func (obj *MPObject) setExtType(buf *bytes.Buffer) error {
