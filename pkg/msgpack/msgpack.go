@@ -23,6 +23,8 @@ import (
 	"io"
 )
 
+// First Byte of each format.
+//   https://github.com/msgpack/msgpack/blob/master/spec.md#overview
 const (
 	NilFormat byte = 0xc0 + iota
 	NeverUsedFormat
@@ -105,6 +107,7 @@ func IsExt(b byte) bool {
 	return (isExt(b) || isFixExt(b))
 }
 
+// Init initializes internal ext format settings.
 func Init() {
 	extFormatInit()
 }
@@ -179,6 +182,8 @@ func typeStr(b byte) string {
 	return ""
 }
 
+// MPObject represents message pack object.
+// If the object is array or map, MPObject has Child which represents each element.
 type MPObject struct {
 	FirstByte byte
 	TypeName  string
@@ -209,6 +214,7 @@ func (obj *MPObject) setCollection(buf *bytes.Buffer, length int) error {
 	return nil
 }
 
+// Decode analyzes buf and convert MPObject.
 func Decode(buf *bytes.Buffer) (*MPObject, error) {
 	Init()
 	return decode(buf)

@@ -23,12 +23,14 @@ import (
 	"time"
 )
 
+// ExtFormat represents Ext Format.
 type ExtFormat struct {
 	ExtType    int8
 	TypeName   string
 	DecodeFunc func([]byte) string
 }
 
+/* Decode functions for Timestamp extension type. */
 /* https://github.com/msgpack/msgpack/blob/master/spec.md#extension-types */
 func timestamp32(b []byte) string {
 	if len(b) != 4 {
@@ -76,11 +78,15 @@ func extEventTimeV1(b []byte) string {
 
 var extFormats map[byte]([]*ExtFormat)
 
+// RegisterFluentdEventTime registers Fluentd ext timestamp format.
+// https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1 */
 func RegisterFluentdEventTime() {
 	RegisterExt(FixExt8Format, &ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
 	RegisterExt(Ext8Format, &ExtFormat{ExtType: 0, TypeName: "event time", DecodeFunc: extEventTimeV1})
 }
 
+// RegisterExt register user defined ext format.
+// b means Type of ext format.
 func RegisterExt(b byte, ext *ExtFormat) {
 	extFormats[b] = append(extFormats[b], ext)
 }
