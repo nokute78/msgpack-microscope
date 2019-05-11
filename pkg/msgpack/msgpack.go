@@ -194,12 +194,30 @@ type MPObject struct {
 	Child     []*MPObject
 }
 
-func nextWithError(buf *bytes.Buffer, n int)([]byte, error) {
+func nextWithError(buf *bytes.Buffer, n int) ([]byte, error) {
 	bufs := buf.Next(n)
 	if len(bufs) != n {
 		return bufs, fmt.Errorf("bytes.Buffer Next error")
 	}
 	return bufs, nil
+}
+
+func (obj *MPObject) setLengthFromBytes(size int, buf *bytes.Buffer) error {
+	length, err := nextWithError(buf, size)
+	if err != nil {
+		return err
+	}
+	obj.Raw = append(obj.Raw, length...)
+
+	switch size {
+	case 1:
+		obj.Length = uint32(length[0])
+	case 2:
+		obj.Length = uint32(binary.BigEndian.Uint16(length))
+	case 4:
+		obj.Length = binary.BigEndian.Uint32(length)
+	}
+	return nil
 }
 
 func (obj *MPObject) setNum(size int, buf *bytes.Buffer, conv func([]byte) string) {
@@ -281,20 +299,24 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.Raw = append(obj.Raw, data...)
 	case isExt(firstbyte):
 		obj.TypeName = typeStr(firstbyte)
-		var length []byte
 		/* length */
 		switch firstbyte {
 		case Ext8Format:
-			length = buf.Next(1)
-			obj.Length = uint32(length[0])
+			err := obj.setLengthFromBytes(1, buf)
+			if err != nil {
+				return obj, err
+			}
 		case Ext16Format:
-			length = buf.Next(2)
-			obj.Length = uint32(binary.BigEndian.Uint16(length))
+			err := obj.setLengthFromBytes(2, buf)
+			if err != nil {
+				return obj, err
+			}
 		case Ext32Format:
-			length = buf.Next(4)
-			obj.Length = binary.BigEndian.Uint32(length)
+			err := obj.setLengthFromBytes(4, buf)
+			if err != nil {
+				return obj, err
+			}
 		}
-		obj.Raw = append(obj.Raw, length...)
 
 		/* type */
 		err := obj.setExtType(buf)
@@ -387,96 +409,98 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				return fmt.Sprintf("%f", v)
 			})
 		case Str8Format:
-			length := buf.Next(1)
-			obj.Raw = append(obj.Raw, length...)
+			err := obj.setLengthFromBytes(1, buf)
+			if err != nil {
+				return obj, err
+			}
 
-			obj.Length = uint32(length[0])
 			str := buf.Next(int(obj.Length))
 			obj.Raw = append(obj.Raw, str...)
 			obj.DataStr = string(str)
 
 		case Str16Format:
-			length := buf.Next(2)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = uint32(binary.BigEndian.Uint16(length))
+			err := obj.setLengthFromBytes(2, buf)
+			if err != nil {
+				return obj, err
+			}
 			str := buf.Next(int(obj.Length))
 			obj.Raw = append(obj.Raw, str...)
 			obj.DataStr = string(str)
 
 		case Str32Format:
-			length := buf.Next(4)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = binary.BigEndian.Uint32(length)
+			err := obj.setLengthFromBytes(4, buf)
+			if err != nil {
+				return obj, err
+			}
 			str := buf.Next(int(obj.Length))
 			obj.Raw = append(obj.Raw, str...)
 			obj.DataStr = string(str)
 
 		case Bin8Format:
-			length := buf.Next(1)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = uint32(length[0])
+			err := obj.setLengthFromBytes(1, buf)
+			if err != nil {
+				return obj, err
+			}
 			bins := buf.Next(int(obj.Length))
 			obj.Raw = append(obj.Raw, bins...)
 			obj.DataStr = fmt.Sprintf("0x%x", bins)
 		case Bin16Format:
-			length := buf.Next(2)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = uint32(binary.BigEndian.Uint16(length))
+			err := obj.setLengthFromBytes(2, buf)
+			if err != nil {
+				return obj, err
+			}
 			bins := buf.Next(int(obj.Length))
 			obj.Raw = append(obj.Raw, bins...)
 			obj.DataStr = fmt.Sprintf("0x%x", bins)
 
 		case Bin32Format:
-			length := buf.Next(4)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = binary.BigEndian.Uint32(length)
+			err := obj.setLengthFromBytes(4, buf)
+			if err != nil {
+				return obj, err
+			}
 			bins := buf.Next(int(obj.Length))
 			obj.Raw = append(obj.Raw, bins...)
 			obj.DataStr = fmt.Sprintf("0x%x", bins)
 		case Array16Format:
-			length := buf.Next(2)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = uint32(binary.BigEndian.Uint16(length))
+			err := obj.setLengthFromBytes(2, buf)
+			if err != nil {
+				return obj, err
+			}
 			obj.DataStr = "(array 16)"
-			err := obj.setCollection(buf, int(obj.Length))
+			err = obj.setCollection(buf, int(obj.Length))
 			if err != nil {
 				return nil, err
 			}
 
 		case Array32Format:
-			length := buf.Next(4)
-			obj.Raw = append(obj.Raw, length...)
-			obj.Length = binary.BigEndian.Uint32(length)
+			err := obj.setLengthFromBytes(4, buf)
+			if err != nil {
+				return obj, err
+			}
 			obj.DataStr = "(array 32)"
-			err := obj.setCollection(buf, int(obj.Length))
+			err = obj.setCollection(buf, int(obj.Length))
 			if err != nil {
 				return nil, err
 			}
 
 		case Map16Format:
-			length := buf.Next(2)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = uint32(binary.BigEndian.Uint16(length))
+			err := obj.setLengthFromBytes(2, buf)
+			if err != nil {
+				return obj, err
+			}
 			obj.DataStr = "(map 16)"
-			err := obj.setCollection(buf, int(obj.Length)*2)
+			err = obj.setCollection(buf, int(obj.Length)*2)
 			if err != nil {
 				return nil, err
 			}
 
 		case Map32Format:
-			length := buf.Next(4)
-			obj.Raw = append(obj.Raw, length...)
-
-			obj.Length = binary.BigEndian.Uint32(length)
+			err := obj.setLengthFromBytes(4, buf)
+			if err != nil {
+				return obj, err
+			}
 			obj.DataStr = "(map 32)"
-			err := obj.setCollection(buf, int(obj.Length)*2)
+			err = obj.setCollection(buf, int(obj.Length)*2)
 			if err != nil {
 				return nil, err
 			}
