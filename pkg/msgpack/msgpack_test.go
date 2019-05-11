@@ -268,7 +268,7 @@ func TestIsExt(t *testing.T) {
 	}
 }
 
-func TestShortenCollection(t *testing.T) {
+func TestShortenData(t *testing.T) {
 	currentcase := ""
 
 	type testcase struct {
@@ -287,14 +287,70 @@ func TestShortenCollection(t *testing.T) {
 	cases := []testcase{
 		{"FixMap Only Header", []byte{0x82}},
 		{"FixArray Only Header", []byte{0x92}},
+		{"FixStr Only Header", []byte{0xa2}},
+		{"Ext8 Only Header", []byte{0xc7}},
+		{"Ext16 Only Header", []byte{0xc8}},
+		{"Ext32 Only Header", []byte{0xc9}},
+		{"FixExt1 Only Header", []byte{0xd4}},
+		{"FixExt2 Only Header", []byte{0xd5}},
+		{"FixExt4 Only Header", []byte{0xd6}},
+		{"FixExt8 Only Header", []byte{0xd7}},
+		{"FixExt16 Only Header", []byte{0xd8}},
+		/* ----- no length -----*/
+		{"Bin8 No Length", []byte{0xc4}},
+		{"Bin16 No Length", []byte{0xc5}},
+		{"Bin32 No Length", []byte{0xc6}},
+		{"Str8 No Length", []byte{0xd9}},
+		{"Str16 No Length", []byte{0xda}},
+		{"Str32 No Length", []byte{0xdb}},
 		{"Array16 No Length", []byte{0xdc}},
 		{"Array32 No Length", []byte{0xdd}},
 		{"Map16 No Length", []byte{0xde}},
 		{"Map32 No Length", []byte{0xdf}},
+		/* ----- shorten length -----*/
+		/*  partial length field     */
+		{"Bin16 Shorten Length", []byte{0xc5, 0x01}},
+		{"Bin32 Shorten Length", []byte{0xc6, 0x01}},
+		{"Ext16 Shorten Length", []byte{0xc8, 0x01}},
+		{"Ext32 Shorten Length", []byte{0xc9, 0x01}},
+		{"Str16 Shorten Length", []byte{0xda, 0x01}},
+		{"Str32 Shorten Length", []byte{0xdb, 0x01}},
 		{"Array16 Shorten Length", []byte{0xdc, 0x01}},
 		{"Array32 Shorten Length", []byte{0xdd, 0x01}},
 		{"Map16 Shorten Length", []byte{0xde, 0x01}},
 		{"Map32 Shorten Length", []byte{0xdf, 0x01}},
+		/* ----- shorten data -----*/
+		{"Shorten FixMap KV", []byte{0x82, 0xa1, 0x60, 0x01 }},
+		{"Shorten FixMap Key", []byte{0x82, 0xa1, 0x60}},
+		{"Shorten FixArray", []byte{0x92, 0x01}},
+		{"Shorten FixStr", []byte{0xa2, 0x10}},
+		{"Shorten Bin8", []byte{0xc4, 0x03, 0x01}},
+		{"Shorten Bin16", []byte{0xc5, 0x00, 0x10, 0x1}},
+		{"Shorten Bin32", []byte{0xc6, 0x00, 0x01, 0x00, 0x00, 0x01}},
+		{"Shorten Ext8", []byte{0xc7, 0x04, 0x01, 0x01}},
+		{"Ext8 No Data", []byte{0xc8, 0x01, 0x01}},
+		{"Shorten Ext16", []byte{0xc8, 0x00, 0x04, 0x01, 0x01}},
+		{"Ext16 No Data", []byte{0xc8, 0x00, 0x01, 0x01}},
+		{"Shorten Ext32", []byte{0xc9, 0x00, 0x00, 0x00, 0x04, 0x01, 0x01}},
+		{"Ext32 No Data", []byte{0xc9, 0x00, 0x00, 0x00, 0x01, 0x01}},
+		{"FixExt1 No Data", []byte{0xd4, 0x01}},
+		{"Shorten FixExt2", []byte{0xd5, 0x01, 0x01}},
+		{"FixExt2 No Data", []byte{0xd5, 0x01}},
+		{"Shorten FixExt4", []byte{0xd6, 0x01, 0x03, 0x01}},
+		{"FixExt4 No Data", []byte{0xd6, 0x01}},
+		{"Shorten FixExt8", []byte{0xd7, 0x01, 0x01, 0x02}},
+		{"FixExt8 No Data", []byte{0xd7, 0x01}},
+		{"Shorten FixExt16", []byte{0xd8, 0x01, 0x01, 0x02}},
+		{"FixExt16 No Data", []byte{0xd8, 0x01}},
+		{"Shorten Str8", []byte{0xd9, 0x03, 0x01}},
+		{"Shorten Str16", []byte{0xda, 0x00, 0x03, 0x01}},
+		{"Shorten Str32", []byte{0xdb, 0x00, 0x00, 0x00, 0x04, 0x01}},
+		{"Shorten Array16", []byte{0xdc, 0x00, 0x04, 0x01}},
+		{"Shorten Array32", []byte{0xdd, 0x00, 0x00, 0x00, 0x04, 0x01}},
+		{"Shorten Map16 KV", []byte{0xde, 0x00, 0x04, 0xa1, 0x60, 0x01}},
+		{"Shorten Map16 Key", []byte{0xde, 0x00, 0x04, 0xa1, 0x60}},
+		{"Shorten Map32 KV", []byte{0xdf, 0x00, 0x00, 0x00, 0x04, 0xa1, 0x60, 0x01}},
+		{"Shorten Map32 Key", []byte{0xdf, 0x00, 0x00, 0x00, 0x04, 0xa1, 0x60}},
 	}
 
 	Init()
