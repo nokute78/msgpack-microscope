@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
 )
 
 // First Byte of each format.
@@ -203,6 +202,10 @@ func nextWithError(buf *bytes.Buffer, n int) ([]byte, error) {
 }
 
 func (obj *MPObject) setLengthFromBytes(size int, buf *bytes.Buffer) error {
+	if size != 1 && size != 2 && size != 4 {
+		return fmt.Errorf("illegal size %d", size)
+	}
+
 	length, err := nextWithError(buf, size)
 	if err != nil {
 		return err
@@ -220,10 +223,15 @@ func (obj *MPObject) setLengthFromBytes(size int, buf *bytes.Buffer) error {
 	return nil
 }
 
-func (obj *MPObject) setNum(size int, buf *bytes.Buffer, conv func([]byte) string) {
-	bufs := buf.Next(size)
+func (obj *MPObject) setNum(size int, buf *bytes.Buffer, conv func([]byte) string) error {
+	bufs, err := nextWithError(buf, size)
+	if err != nil {
+		return err
+	}
 	obj.Raw = append(obj.Raw, bufs...)
 	obj.DataStr = conv(bufs)
+
+	return nil
 }
 
 func (obj *MPObject) setCollection(buf *bytes.Buffer, length int) error {
@@ -280,9 +288,9 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 	case isFixStr(firstbyte):
 		obj.TypeName = "fixstr"
 		obj.Length = uint32(firstbyte & 0x1f)
-		bufs := buf.Next(int(obj.Length))
-		if len(bufs) < int(obj.Length) {
-			return obj, io.EOF
+		bufs, err := nextWithError(buf, int(obj.Length))
+		if err != nil {
+			return obj, err
 		}
 		obj.DataStr = string(bufs)
 		obj.Raw = append(obj.Raw, bufs...)
@@ -292,7 +300,10 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		if err != nil {
 			return obj, err
 		}
-		data := buf.Next(1 << uint(firstbyte-FixExt1Format))
+		data, err := nextWithError(buf, 1<<uint(firstbyte-FixExt1Format))
+		if err != nil {
+			return obj, err
+		}
 		if !obj.setRegisteredExt(data) {
 			obj.DataStr = fmt.Sprintf("0x%x", data)
 		}
@@ -324,7 +335,11 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			return obj, err
 		}
 
-		data := buf.Next(int(obj.Length))
+		data, err := nextWithError(buf, int(obj.Length))
+		if err != nil {
+			return obj, err
+		}
+
 		if !obj.setRegisteredExt(data) {
 			obj.DataStr = fmt.Sprintf("0x%x", data)
 		}
@@ -343,21 +358,33 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			obj.DataStr = "false"
 			/* Uint family*/
 		case Uint8Format:
-			obj.setNum(1, buf, func(b []byte) string {
+			err := obj.setNum(1, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", uint8(b[0]))
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Uint16Format:
 			obj.setNum(2, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", (binary.BigEndian.Uint16(b)))
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Uint32Format:
 			obj.setNum(4, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", (binary.BigEndian.Uint32(b)))
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Uint64Format:
 			obj.setNum(8, buf, func(b []byte) string {
 				return fmt.Sprintf("%d", (binary.BigEndian.Uint64(b)))
 			})
+			if err != nil {
+				return obj, err
+			}
 
 			/* Int family */
 		case Int8Format:
@@ -368,6 +395,9 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				}
 				return fmt.Sprintf("%d", v)
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Int16Format:
 			obj.setNum(2, buf, func(b []byte) string {
 				var v int16
@@ -376,6 +406,9 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				}
 				return fmt.Sprintf("%d", v)
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Int32Format:
 			obj.setNum(4, buf, func(b []byte) string {
 				var v int32
@@ -384,6 +417,9 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				}
 				return fmt.Sprintf("%d", v)
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Int64Format:
 			obj.setNum(8, buf, func(b []byte) string {
 				var v int64
@@ -392,6 +428,9 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				}
 				return fmt.Sprintf("%d", v)
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Float32Format:
 			obj.setNum(4, buf, func(b []byte) string {
 				var v float32
@@ -400,6 +439,9 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				}
 				return fmt.Sprintf("%f", v)
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Float64Format:
 			obj.setNum(8, buf, func(b []byte) string {
 				var v float64
@@ -408,13 +450,19 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 				}
 				return fmt.Sprintf("%f", v)
 			})
+			if err != nil {
+				return obj, err
+			}
 		case Str8Format:
 			err := obj.setLengthFromBytes(1, buf)
 			if err != nil {
 				return obj, err
 			}
 
-			str := buf.Next(int(obj.Length))
+			str, err := nextWithError(buf, int(obj.Length))
+			if err != nil {
+				return obj, err
+			}
 			obj.Raw = append(obj.Raw, str...)
 			obj.DataStr = string(str)
 
@@ -423,7 +471,10 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			if err != nil {
 				return obj, err
 			}
-			str := buf.Next(int(obj.Length))
+			str, err := nextWithError(buf, int(obj.Length))
+			if err != nil {
+				return obj, err
+			}
 			obj.Raw = append(obj.Raw, str...)
 			obj.DataStr = string(str)
 
@@ -432,7 +483,10 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			if err != nil {
 				return obj, err
 			}
-			str := buf.Next(int(obj.Length))
+			str, err := nextWithError(buf, int(obj.Length))
+			if err != nil {
+				return obj, err
+			}
 			obj.Raw = append(obj.Raw, str...)
 			obj.DataStr = string(str)
 
@@ -441,7 +495,10 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			if err != nil {
 				return obj, err
 			}
-			bins := buf.Next(int(obj.Length))
+			bins, err := nextWithError(buf, int(obj.Length))
+			if err != nil {
+				return obj, err
+			}
 			obj.Raw = append(obj.Raw, bins...)
 			obj.DataStr = fmt.Sprintf("0x%x", bins)
 		case Bin16Format:
@@ -449,7 +506,10 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			if err != nil {
 				return obj, err
 			}
-			bins := buf.Next(int(obj.Length))
+			bins, err := nextWithError(buf, int(obj.Length))
+			if err != nil {
+				return obj, err
+			}
 			obj.Raw = append(obj.Raw, bins...)
 			obj.DataStr = fmt.Sprintf("0x%x", bins)
 
@@ -458,7 +518,10 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			if err != nil {
 				return obj, err
 			}
-			bins := buf.Next(int(obj.Length))
+			bins, err := nextWithError(buf, int(obj.Length))
+			if err != nil {
+				return obj, err
+			}
 			obj.Raw = append(obj.Raw, bins...)
 			obj.DataStr = fmt.Sprintf("0x%x", bins)
 		case Array16Format:
