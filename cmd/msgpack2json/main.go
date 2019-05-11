@@ -138,12 +138,14 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 
 		// array body info
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
-		var i uint32
-		for i = 0; i < obj.Length-1; i++ {
-			outputVerboseJSON(obj.Child[i], out, nest+2)
-			fmt.Fprintf(out, ",\n")
+		if obj.Length > 0 {
+			var i uint32
+			for i = 0; i < obj.Length-1; i++ {
+				outputVerboseJSON(obj.Child[i], out, nest+2)
+				fmt.Fprintf(out, ",\n")
+			}
+			outputVerboseJSON(obj.Child[obj.Length-1], out, nest+2)
 		}
-		outputVerboseJSON(obj.Child[obj.Length-1], out, nest+2)
 		fmt.Fprintf(out, "\n%s]\n%s}\n", spaces2, spaces)
 	case msgpack.IsMap(obj.FirstByte):
 		spaces2 := strings.Repeat("    ", nest+1)
@@ -153,11 +155,13 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		// map body info
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
 		var i uint32
-		for i = 0; i < obj.Length-1; i++ {
-			outputVerboseKV(obj, i, out, nest+2)
-			fmt.Fprint(out, ",\n")
+		if obj.Length > 0 {
+			for i = 0; i < obj.Length-1; i++ {
+				outputVerboseKV(obj, i, out, nest+2)
+				fmt.Fprint(out, ",\n")
+			}
+			outputVerboseKV(obj, obj.Length-1, out, nest+2)
 		}
-		outputVerboseKV(obj, obj.Length-1, out, nest+2)
 		fmt.Fprintf(out, "\n%s]\n%s}", spaces2, spaces)
 
 	case msgpack.IsString(obj.FirstByte):
@@ -173,26 +177,30 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	switch {
 	case msgpack.IsMap(obj.FirstByte):
 		fmt.Fprint(out, "{")
-		var i uint32
-		for i = 0; i < obj.Length-1; i++ {
-			/* key */
-			outputJSON(obj.Child[i*2], out, nest+1)
+		if obj.Length > 0 {
+			var i uint32
+			for i = 0; i < obj.Length-1; i++ {
+				/* key */
+				outputJSON(obj.Child[i*2], out, nest+1)
+				fmt.Fprint(out, ":")
+				outputJSON(obj.Child[i*2+1], out, nest+1)
+				fmt.Fprint(out, ",")
+			}
+			outputJSON(obj.Child[(obj.Length-1)*2], out, nest+1)
 			fmt.Fprint(out, ":")
-			outputJSON(obj.Child[i*2+1], out, nest+1)
-			fmt.Fprint(out, ",")
+			outputJSON(obj.Child[(obj.Length-1)*2+1], out, nest+1)
 		}
-		outputJSON(obj.Child[(obj.Length-1)*2], out, nest+1)
-		fmt.Fprint(out, ":")
-		outputJSON(obj.Child[(obj.Length-1)*2+1], out, nest+1)
 		fmt.Fprint(out, "}")
 	case msgpack.IsArray(obj.FirstByte):
 		fmt.Fprint(out, "[")
-		var i uint32
-		for i = 0; i < obj.Length-1; i++ {
-			outputJSON(obj.Child[i], out, nest+1)
-			fmt.Fprint(out, ",")
+		if obj.Length > 0 {
+			var i uint32
+			for i = 0; i < obj.Length-1; i++ {
+				outputJSON(obj.Child[i], out, nest+1)
+				fmt.Fprint(out, ",")
+			}
+			outputJSON(obj.Child[obj.Length-1], out, nest+1)
 		}
-		outputJSON(obj.Child[obj.Length-1], out, nest+1)
 		fmt.Fprint(out, "]")
 	case msgpack.IsString(obj.FirstByte):
 		fmt.Fprintf(out, "\"%s\"", obj.DataStr)
