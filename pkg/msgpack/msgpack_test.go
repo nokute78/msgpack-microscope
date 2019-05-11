@@ -270,12 +270,12 @@ func TestShortenCollection(t *testing.T) {
 	}
 
 	defer func(str *string) {
-		err := recover() 
+		err := recover()
 		t.Errorf("%s: panic occured. %s", *str, err)
 	}(&currentcase)
 
 	cases := []testcase{
-		{"FixMap",   []byte{0x82}},
+		{"FixMap", []byte{0x82}},
 		{"FixArray", []byte{0x92}},
 		{"Array16 No Length", []byte{0xdc}},
 		{"Array32 No Length", []byte{0xdd}},
@@ -284,7 +284,7 @@ func TestShortenCollection(t *testing.T) {
 	}
 
 	Init()
-	for _, v := range cases{
+	for _, v := range cases {
 		currentcase = v.casename
 		_, err := Decode(bytes.NewBuffer(v.bytes))
 		if err == nil {
