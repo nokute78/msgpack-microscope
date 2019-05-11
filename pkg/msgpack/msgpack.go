@@ -241,7 +241,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.DataStr = "(fixmap)"
 		err := obj.setCollection(buf, int(obj.Length)*2)
 		if err != nil {
-			return nil, err
+			return obj, err
 		}
 	case isFixArray(firstbyte):
 		obj.TypeName = "fixarray"
@@ -249,14 +249,14 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.DataStr = "(fixarray)"
 		err := obj.setCollection(buf, int(obj.Length))
 		if err != nil {
-			return nil, err
+			return obj, err
 		}
 	case isFixStr(firstbyte):
 		obj.TypeName = "fixstr"
 		obj.Length = uint32(firstbyte & 0x1f)
 		bufs := buf.Next(int(obj.Length))
 		if len(bufs) < int(obj.Length) {
-			return nil, io.EOF
+			return obj, io.EOF
 		}
 		obj.DataStr = string(bufs)
 		obj.Raw = append(obj.Raw, bufs...)
@@ -264,7 +264,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.TypeName = typeStr(firstbyte)
 		err := obj.setExtType(buf)
 		if err != nil {
-			return nil, err
+			return obj, err
 		}
 		data := buf.Next(1 << uint(firstbyte-FixExt1Format))
 		if !obj.setRegisteredExt(data) {
@@ -291,7 +291,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		/* type */
 		err := obj.setExtType(buf)
 		if err != nil {
-			return nil, err
+			return obj, err
 		}
 
 		data := buf.Next(int(obj.Length))
