@@ -293,18 +293,18 @@ func TestShortenCollection(t *testing.T) {
 	}
 }
 
-func TestnextWithError(t *testing.T) {
+func TestNextWithError(t *testing.T) {
 
 	errorcase := []byte{0x0, 0x1, 0x2, 0x3}
 	buf := bytes.NewBuffer(errorcase)
-	_, err := NextWithError(buf, len(errorcase)+1)
+	_, err := nextWithError(buf, len(errorcase)+1)
 	if err == nil {
 		t.Errorf("NextWithError successed")
 	}
 
 	okcase := []byte{0x0, 0x1, 0x2, 0x3}
 	buf = bytes.NewBuffer(okcase)
-	_, err = NextWithError(buf, len(okcase))
+	_, err = nextWithError(buf, len(okcase))
 	if err != nil {
 		t.Errorf("NextWithError is not successed")
 	}
