@@ -320,7 +320,7 @@ func TestShortenData(t *testing.T) {
 		{"Map16 Shorten Length", []byte{0xde, 0x01}},
 		{"Map32 Shorten Length", []byte{0xdf, 0x01}},
 		/* ----- shorten data -----*/
-		{"Shorten FixMap KV", []byte{0x82, 0xa1, 0x60, 0x01 }},
+		{"Shorten FixMap KV", []byte{0x82, 0xa1, 0x60, 0x01}},
 		{"Shorten FixMap Key", []byte{0x82, 0xa1, 0x60}},
 		{"Shorten FixArray", []byte{0x92, 0x01}},
 		{"Shorten FixStr", []byte{0xa2, 0x10}},
