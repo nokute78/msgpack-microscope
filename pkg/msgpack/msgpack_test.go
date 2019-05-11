@@ -260,3 +260,35 @@ func TestIsExt(t *testing.T) {
 		}
 	}
 }
+
+func TestShortenCollection(t *testing.T) {
+	currentcase := ""
+
+	type testcase struct {
+		casename string
+		bytes    []byte
+	}
+
+	defer func(str *string) {
+		err := recover() 
+		t.Errorf("%s: panic occured. %s", *str, err)
+	}(&currentcase)
+
+	cases := []testcase{
+		{"FixMap",   []byte{0x82}},
+		{"FixArray", []byte{0x92}},
+		{"Array16 No Length", []byte{0xdc}},
+		{"Array32 No Length", []byte{0xdd}},
+		{"Map16 No Length", []byte{0xde}},
+		{"Map32 No Length", []byte{0xdf}},
+	}
+
+	Init()
+	for _, v := range cases{
+		currentcase = v.casename
+		_, err := Decode(bytes.NewBuffer(v.bytes))
+		if err == nil {
+			t.Errorf("%s: No error is detected", v.casename)
+		}
+	}
+}
