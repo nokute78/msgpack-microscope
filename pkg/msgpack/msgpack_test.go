@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strings"
 	"testing"
 )
@@ -277,7 +278,10 @@ func TestShortenCollection(t *testing.T) {
 
 	defer func(str *string) {
 		err := recover()
-		t.Errorf("%s: panic occured. %s", *str, err)
+		if err != nil {
+			t.Errorf("%s: panic occured. %s", *str, err)
+			debug.PrintStack()
+		}
 	}(&currentcase)
 
 	cases := []testcase{
