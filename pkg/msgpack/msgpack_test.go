@@ -285,12 +285,16 @@ func TestShortenCollection(t *testing.T) {
 	}(&currentcase)
 
 	cases := []testcase{
-		{"FixMap", []byte{0x82}},
-		{"FixArray", []byte{0x92}},
+		{"FixMap Only Header", []byte{0x82}},
+		{"FixArray Only Header", []byte{0x92}},
 		{"Array16 No Length", []byte{0xdc}},
 		{"Array32 No Length", []byte{0xdd}},
 		{"Map16 No Length", []byte{0xde}},
 		{"Map32 No Length", []byte{0xdf}},
+		{"Array16 Shorten Length", []byte{0xdc, 0x01}},
+		{"Array32 Shorten Length", []byte{0xdd, 0x01}},
+		{"Map16 Shorten Length", []byte{0xde, 0x01}},
+		{"Map32 Shorten Length", []byte{0xdf, 0x01}},
 	}
 
 	Init()
