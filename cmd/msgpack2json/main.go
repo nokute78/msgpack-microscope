@@ -51,8 +51,11 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int 
 	}
 	ret, err := msgpack.Decode(bytes.NewBuffer(b))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return 1
+		fmt.Fprintf(os.Stderr, "Error(%s) detected. Incoming data may be broken.\n", err)
+		if ret == nil {
+			return 1
+		}
+		/* ret is broken, but try to output as much as possible. */
 	}
 	if cnf.showSource {
 		fmt.Fprintf(out, "%s: ", file)
@@ -121,6 +124,9 @@ func outputVerboseKV(obj *msgpack.MPObject, i uint32, out io.Writer, nest int) {
 }
 
 func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
+	if obj == nil {
+		return
+	}
 	spaces := strings.Repeat("    ", nest)
 
 	switch {
