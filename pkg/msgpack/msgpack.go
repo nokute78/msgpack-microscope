@@ -194,6 +194,14 @@ type MPObject struct {
 	Child     []*MPObject
 }
 
+func nextWithError(buf *bytes.Buffer, n int)([]byte, error) {
+	bufs := buf.Next(n)
+	if len(bufs) != n {
+		return bufs, fmt.Errorf("bytes.Buffer Next error")
+	}
+	return bufs, nil
+}
+
 func (obj *MPObject) setNum(size int, buf *bytes.Buffer, conv func([]byte) string) {
 	bufs := buf.Next(size)
 	obj.Raw = append(obj.Raw, bufs...)
