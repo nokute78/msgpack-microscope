@@ -51,23 +51,27 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int 
 		fmt.Fprintf(os.Stderr, "ioutil.ReadAll :%v\n", err)
 		return 1
 	}
-	ret, err := msgpack.Decode(bytes.NewBuffer(b))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error(%s) detected. Incoming data may be broken.\n", err)
-		if ret == nil {
-			return 1
+
+	buf := bytes.NewBuffer(b)
+	for buf.Len() > 0 {
+		ret, err := msgpack.Decode(buf)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error(%s) detected. Incoming data may be broken.\n", err)
+			if ret == nil {
+				return 1
+			}
+			/* ret is broken, but try to output as much as possible. */
 		}
-		/* ret is broken, but try to output as much as possible. */
+		if cnf.showSource {
+			fmt.Fprintf(out, "%s: ", file)
+		}
+		if cnf.verbose {
+			outputVerboseJSON(ret, out, 0)
+		} else {
+			outputJSON(ret, out, 0)
+		}
+		fmt.Fprintf(out, "\n")
 	}
-	if cnf.showSource {
-		fmt.Fprintf(out, "%s: ", file)
-	}
-	if cnf.verbose {
-		outputVerboseJSON(ret, out, 0)
-	} else {
-		outputJSON(ret, out, 0)
-	}
-	fmt.Fprintf(out, "\n")
 
 	return 0
 }
@@ -217,10 +221,10 @@ func cmdMain() int {
 
 	config := config{}
 
-	flag.BoolVar(&config.showSource, "f", false, "print data source")
+	flag.BoolVar(&config.showSource, "f", false, "show data source (e.g. stdin, filename)")
 	flag.BoolVar(&config.serverMode, "s", false, "http server mode")
 	flag.BoolVar(&config.verbose, "v", false, "verbose mode")
-	flag.BoolVar(&config.eventTime, "e", false, "support fluentd event time ext format")
+	flag.BoolVar(&config.eventTime, "e", false, "enable Fluentd event time ext format")
 	flag.BoolVar(&showVersion, "V", false, "show version")
 	flag.UintVar(&config.serverPort, "p", 8080, "port number for server mode")
 
