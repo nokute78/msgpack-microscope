@@ -193,6 +193,20 @@ type MPObject struct {
 	Child     []*MPObject
 }
 
+// String implements Stringer interface.
+func (obj *MPObject) String() string {
+	switch {
+	case IsArray(obj.FirstByte) || IsMap(obj.FirstByte):
+		return fmt.Sprintf(`%s(0x%02x): length=%d`, obj.TypeName, obj.FirstByte, obj.Length)
+	case IsString(obj.FirstByte):
+		return fmt.Sprintf(`%s(0x%02x): val="%s"`, obj.TypeName, obj.FirstByte, obj.DataStr)
+	case IsExt(obj.FirstByte):
+		return fmt.Sprintf(`%s(0x%02x): type=%d val=%s`, obj.TypeName, obj.FirstByte, obj.ExtType, obj.DataStr)
+	default:
+		return fmt.Sprintf(`%s(0x%02x): val=%s`, obj.TypeName, obj.FirstByte, obj.DataStr)
+	}
+}
+
 func nextWithError(buf *bytes.Buffer, n int) ([]byte, error) {
 	bufs := buf.Next(n)
 	if len(bufs) != n {

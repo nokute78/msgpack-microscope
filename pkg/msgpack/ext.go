@@ -31,6 +31,11 @@ type ExtFormat struct {
 	DecodeFunc func([]byte) string
 }
 
+// String implements Stringer interface.
+func (obj *ExtFormat) String() string {
+	return fmt.Sprintf(`%s(0x%02x): type=%d func=%v`, obj.TypeName, obj.FirstByte, obj.ExtType, obj.DecodeFunc)
+}
+
 /* Decode functions for Timestamp extension type. */
 /* https://github.com/msgpack/msgpack/blob/master/spec.md#extension-types */
 func timestamp32(b []byte) string {
