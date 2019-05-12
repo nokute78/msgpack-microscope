@@ -92,7 +92,7 @@ func RegisterFluentdEventTime() {
 }
 
 // RegisterExt register user defined ext format.
-func RegisterExt(ext *ExtFormat) error{
+func RegisterExt(ext *ExtFormat) error {
 	if ext == nil {
 		return fmt.Errorf("ext pointer is nil")
 	} else if ext.DecodeFunc == nil {
@@ -100,9 +100,9 @@ func RegisterExt(ext *ExtFormat) error{
 	} else if !IsExt(ext.FirstByte) {
 		return fmt.Errorf("0x%02x is not ext type", ext.FirstByte)
 	}
-	
+
 	extFormats[ext.FirstByte] = append(extFormats[ext.FirstByte], ext)
-    return nil
+	return nil
 }
 
 func extFormatInit() {
