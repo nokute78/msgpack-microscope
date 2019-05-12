@@ -33,7 +33,7 @@ type ExtFormat struct {
 
 // String implements Stringer interface.
 func (obj *ExtFormat) String() string {
-	return fmt.Sprintf(`%s(0x%02x): type=%d func=%v`, obj.TypeName, obj.FirstByte, obj.ExtType, obj.DecodeFunc)
+	return fmt.Sprintf(`%s(0x%02x): type=%d`, obj.TypeName, obj.FirstByte, obj.ExtType)
 }
 
 /* Decode functions for Timestamp extension type. */
