@@ -31,6 +31,8 @@ import (
 	"github.com/nokute78/msgpack2txt/pkg/msgpack"
 )
 
+const version string = "0.0.1"
+
 type config struct {
 	showSource bool
 	serverMode bool
@@ -211,6 +213,7 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 
 func cmdMain() int {
 	ret := 1
+	showVersion := false
 
 	config := config{}
 
@@ -218,11 +221,16 @@ func cmdMain() int {
 	flag.BoolVar(&config.serverMode, "s", false, "http server mode")
 	flag.BoolVar(&config.verbose, "v", false, "verbose mode")
 	flag.BoolVar(&config.eventTime, "e", false, "support fluentd event time ext format")
+	flag.BoolVar(&showVersion, "V", false, "show version")
 	flag.UintVar(&config.serverPort, "p", 8080, "port number for server mode")
 
 	flag.Parse()
 
 	msgpack.Init()
+
+	if showVersion {
+		fmt.Printf("Ver: %s\n", version)
+	}
 
 	if config.eventTime {
 		msgpack.RegisterFluentdEventTime()
