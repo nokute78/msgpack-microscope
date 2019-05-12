@@ -230,6 +230,7 @@ func cmdMain() int {
 
 	if showVersion {
 		fmt.Printf("Ver: %s\n", version)
+		return 0
 	}
 
 	if config.eventTime {
