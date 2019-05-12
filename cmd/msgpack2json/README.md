@@ -1,10 +1,10 @@
-## msgpack2json
+# msgpack2json
 
 A command line tool to convert MessagePack to JSON.
 
 It is inspired by [msgpack-inspect](https://github.com/tagomoris/msgpack-inspect).
 
-### Option
+## Option
 ```
 Usage of ./msgpack2json:
   -V	show version
@@ -16,7 +16,7 @@ Usage of ./msgpack2json:
   -v	verbose mode
 ```
 
-### Example (STDIN)
+## Example (STDIN)
 
 ```
 $ printf "\x82\xa10\x01\xa11\x81\xa1a\x02"|./msgpack2json
@@ -28,7 +28,7 @@ $ printf "\x82\xa7compact\xc3\xa6schema\x00"|./msgpack2json
 {"compact":true,"schema":0}
 ```
 
-### Example (File)
+## Example (File)
 
 ```
 $ printf "\x82\xa10\x01\xa11\x81\xa1a\x02" > a.msgp
@@ -39,7 +39,7 @@ $ ./msgpack2json a.msgp b.msgp
 {"compact":true,"schema":0}
 ```
 
-### Example (HTTP Server)
+## Example (HTTP Server)
 
 ```
 $ printf "\x82\xa10\x01\xa11\x81\xa1a\x02" > a.msgp
