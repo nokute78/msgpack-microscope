@@ -319,6 +319,10 @@ func TestShortenData(t *testing.T) {
 		{"Array32 Shorten Length", []byte{0xdd, 0x01}},
 		{"Map16 Shorten Length", []byte{0xde, 0x01}},
 		{"Map32 Shorten Length", []byte{0xdf, 0x01}},
+		/* no types */
+		{"Ext8 no type", []byte{0xc7, 0x01}},
+		{"Ext16 no type", []byte{0xc8, 0x00, 0x01}},
+		{"Ext32 no type", []byte{0xc9, 0x00, 0x00, 0x00, 0x01}},
 		/* ----- shorten data -----*/
 		{"Shorten FixMap KV", []byte{0x82, 0xa1, 0x60, 0x01}},
 		{"Shorten FixMap Key", []byte{0x82, 0xa1, 0x60}},
