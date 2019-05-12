@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/nokute78/msgpack2txt/pkg/msgpack"
 	"strings"
 	"testing"
@@ -65,6 +66,79 @@ func TestOutputJSON(t *testing.T) {
 		{"fixext8", []byte{0xd7, 0x01, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef}, "0xdeadbeefdeadbeef"},
 		{"ext8", []byte{0xc7, 0x04, 0x01, 0xde, 0xad, 0xbe, 0xef}, "0xdeadbeef"},
 	}
+
+	/* str16 */
+	strcase := testcase{casename: "str16", expected: `"` + strings.Repeat("こんにちは", 20) + `"`}
+	strcase.msgpdata = []byte{0xda, 0x01, 0x2c}
+	for i := 0; i < 20; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, []byte{0xe3, 0x81, 0x93, 0xe3, 0x82, 0x93, 0xe3, 0x81, 0xab, 0xe3, 0x81, 0xa1, 0xe3, 0x81, 0xaf}...)
+	}
+	cases = append(cases, strcase)
+
+	/* str32 */
+	strcase = testcase{casename: "str32", expected: `"` + strings.Repeat("こんにちは", 4370) + `"`}
+	strcase.msgpdata = []byte{0xdb, 0x00, 0x01, 0x00, 0x0e}
+	for i := 0; i < 4370; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, []byte{0xe3, 0x81, 0x93, 0xe3, 0x82, 0x93, 0xe3, 0x81, 0xab, 0xe3, 0x81, 0xa1, 0xe3, 0x81, 0xaf}...)
+	}
+	cases = append(cases, strcase)
+
+	/* bin16 */
+	deadbeef := []byte{0xde, 0xad, 0xbe, 0xef}
+	strcase = testcase{casename: "bin16", expected: fmt.Sprintf("0x%x", bytes.Repeat(deadbeef, 64))}
+	strcase.msgpdata = []byte{0xc5, 0x01, 0x00}
+	for i := 0; i < 64; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, deadbeef...)
+	}
+	cases = append(cases, strcase)
+
+	/* bin32 */
+	strcase = testcase{casename: "bin32", expected: fmt.Sprintf("0x%x", bytes.Repeat(deadbeef, 16384))}
+	strcase.msgpdata = []byte{0xc6, 0x00, 0x01, 0x00, 0x00}
+	for i := 0; i < 16384; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, deadbeef...)
+	}
+	cases = append(cases, strcase)
+
+	/* ext16 */
+	strcase = testcase{casename: "ext16", expected: fmt.Sprintf("0x%x", bytes.Repeat(deadbeef, 64))}
+	strcase.msgpdata = []byte{0xc8, 0x01, 0x00, 0x01}
+	for i := 0; i < 64; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, deadbeef...)
+	}
+	cases = append(cases, strcase)
+
+	/* ext32 */
+	strcase = testcase{casename: "ext32", expected: fmt.Sprintf("0x%x", bytes.Repeat(deadbeef, 16384))}
+	strcase.msgpdata = []byte{0xc9, 0x00, 0x01, 0x00, 0x00, 0x01}
+	for i := 0; i < 16384; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, deadbeef...)
+	}
+	cases = append(cases, strcase)
+
+	/* array32 */
+	strcase = testcase{casename: "array32", expected: "[" + strings.Repeat("0,1,2,3,4,5,6,7,", 8191) + "0,1,2,3,4,5,6,7]"}
+	strcase.msgpdata = []byte{0xdd, 0x00, 0x01, 0x00, 0x00}
+	for i := 0; i < 8192; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}...)
+	}
+	cases = append(cases, strcase)
+
+	/* map16 */
+	strcase = testcase{casename: "map16", expected: "{" + strings.Repeat(`"0":0,"1":1,"2":2,"3":3,`, 3) + `"0":0,"1":1,"2":2,"3":3}`}
+	strcase.msgpdata = []byte{0xde, 0x00, 0x10}
+	for i := 0; i < 4; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, []byte{0xa1, 0x30, 0x00, 0xa1, 0x31, 0x01, 0xa1, 0x32, 0x02, 0xa1, 0x33, 0x03}...)
+	}
+	cases = append(cases, strcase)
+
+	/* map32 */
+	strcase = testcase{casename: "map32", expected: "{" + strings.Repeat(`"0":0,"1":1,"2":2,"3":3,`, 16383) + `"0":0,"1":1,"2":2,"3":3}`}
+	strcase.msgpdata = []byte{0xdf, 0x00, 0x01, 0x00, 0x00}
+	for i := 0; i < 16384; i++ {
+		strcase.msgpdata = append(strcase.msgpdata, []byte{0xa1, 0x30, 0x00, 0xa1, 0x31, 0x01, 0xa1, 0x32, 0x02, 0xa1, 0x33, 0x03}...)
+	}
+	cases = append(cases, strcase)
 
 	buf := bytes.Buffer{}
 	for _, v := range cases {
