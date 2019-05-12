@@ -75,3 +75,27 @@ func TestFluentdEventTime(t *testing.T) {
 		t.Errorf("ext8 error. \"%s\" is not %s", ext8.DataStr, timestr)
 	}
 }
+
+func dummyDecodeFunc([]byte) string {
+	return ""
+}
+
+func TestBlockRegisterIllegalExt(t *testing.T) {
+	type testcase struct {
+		casename string
+		ext      *ExtFormat
+	}
+
+	cases := []testcase{
+		{"nil ext", nil},
+		{"nil func", &ExtFormat{FirstByte: Ext8Format}},
+		{"fixint type", &ExtFormat{FirstByte: 0x01, DecodeFunc: dummyDecodeFunc}},
+	}
+
+	for _, v := range cases {
+		err := RegisterExt(v.ext)
+		if err == nil {
+			t.Errorf("%s: Error is not detected", v.casename)
+		}
+	}
+}
