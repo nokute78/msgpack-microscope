@@ -142,6 +142,12 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		// array header info
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
 
+
+		if int(obj.Length) != len(obj.Child) {
+			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d children.\n", obj.Length, len(obj.Child))
+			return
+		}
+
 		// array body info
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
 		if obj.Length > 0 {
@@ -157,6 +163,11 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		spaces2 := strings.Repeat("    ", nest+1)
 		// map header info
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+
+		if int(obj.Length*2) != len(obj.Child) {
+			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d(!=length*2) children.\n", obj.Length, len(obj.Child))
+			return
+		}
 
 		// map body info
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
@@ -179,25 +190,34 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	}
 }
 
+func outputKV(obj *msgpack.MPObject, i uint32, out io.Writer, nest int) {
+	outputJSON(obj.Child[i*2], out, nest)
+	fmt.Fprint(out, ":")
+	outputJSON(obj.Child[i*2+1], out, nest)
+}
+
 func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	switch {
 	case msgpack.IsMap(obj.FirstByte):
+		if int(obj.Length*2) != len(obj.Child) {
+			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d(!=length*2) children.\n", obj.Length, len(obj.Child))
+			return
+		}
 		fmt.Fprint(out, "{")
 		if obj.Length > 0 {
 			var i uint32
 			for i = 0; i < obj.Length-1; i++ {
-				/* key */
-				outputJSON(obj.Child[i*2], out, nest+1)
-				fmt.Fprint(out, ":")
-				outputJSON(obj.Child[i*2+1], out, nest+1)
+				outputKV(obj, i, out, nest+1)
 				fmt.Fprint(out, ",")
 			}
-			outputJSON(obj.Child[(obj.Length-1)*2], out, nest+1)
-			fmt.Fprint(out, ":")
-			outputJSON(obj.Child[(obj.Length-1)*2+1], out, nest+1)
+			outputKV(obj, obj.Length-1, out, nest+1)
 		}
 		fmt.Fprint(out, "}")
 	case msgpack.IsArray(obj.FirstByte):
+		if int(obj.Length) != len(obj.Child) {
+			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d children.\n", obj.Length, len(obj.Child))
+			return
+		}
 		fmt.Fprint(out, "[")
 		if obj.Length > 0 {
 			var i uint32
