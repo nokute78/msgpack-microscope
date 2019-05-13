@@ -140,7 +140,7 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		spaces2 := strings.Repeat("    ", nest+1)
 
 		// array header info
-		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "length":%d, "raw":0x%0x, "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
 
 		// array body info
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
@@ -156,7 +156,7 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	case msgpack.IsMap(obj.FirstByte):
 		spaces2 := strings.Repeat("    ", nest+1)
 		// map header info
-		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "length":%d, "raw":0x%0x, "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
 
 		// map body info
 		fmt.Fprintf(out, "\n%s[\n", spaces2)
@@ -171,11 +171,11 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, "\n%s]\n%s}", spaces2, spaces)
 
 	case msgpack.IsString(obj.FirstByte):
-		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "raw":0x%0x, "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	case msgpack.IsExt(obj.FirstByte):
-		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "type":%d, "raw":0x%0x, "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
 	default:
-		fmt.Fprintf(out, `%s{"format":"%s", "byte":0x%02x, "raw":0x%0x, "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	}
 }
 
