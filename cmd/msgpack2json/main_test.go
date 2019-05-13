@@ -463,3 +463,49 @@ func TestVerboseJSONArray(t *testing.T) {
 		}
 	}
 }
+
+type MPMap struct {
+	MPBase
+	Value []map[string]interface{} `json:value`
+}
+
+/*
+type MPKey struct {
+	MPBase
+	Value MPString `json:key`
+}
+
+type MPValue struct {
+	MPBase
+	Value MPInt `json:value`
+}
+*/
+
+func TestVerboseJSONMap(t *testing.T) {
+	type testcase struct {
+		casename string
+		bytes    []byte
+		length   int
+	}
+
+	cases := []testcase{
+		{"fixmap len2", []byte{0x82, 0xa1, 0x30, 0x00, 0xa1, 0x31, 0x01}, 2},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPMap{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if len(p.Value) != v.length {
+			t.Errorf("%s: Length Error given: %d. expected: %d", v.casename, len(p.Value), v.length)
+		}
+		// TODO: check p.Value
+	}
+}
