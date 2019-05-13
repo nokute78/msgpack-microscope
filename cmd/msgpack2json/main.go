@@ -38,7 +38,7 @@ type config struct {
 	serverMode bool
 	eventTime  bool
 	serverPort uint
-	verbose    bool
+	rawmode    bool
 }
 
 type serverHandler struct {
@@ -65,10 +65,10 @@ func decodeAndOutput(in io.Reader, out io.Writer, file string, cnf *config) int 
 		if cnf.showSource {
 			fmt.Fprintf(out, "%s: ", file)
 		}
-		if cnf.verbose {
-			outputVerboseJSON(ret, out, 0)
-		} else {
+		if cnf.rawmode {
 			outputJSON(ret, out, 0)
+		} else {
+			outputVerboseJSON(ret, out, 0)
 		}
 		fmt.Fprintf(out, "\n")
 	}
@@ -253,9 +253,9 @@ func cmdMain() int {
 
 	flag.BoolVar(&config.showSource, "f", false, "show data source (e.g. stdin, filename)")
 	flag.BoolVar(&config.serverMode, "s", false, "http server mode")
-	flag.BoolVar(&config.verbose, "v", false, "verbose mode")
+	flag.BoolVar(&config.rawmode, "r", false, "raw JSON mode")
 	flag.BoolVar(&config.eventTime, "e", false, "enable Fluentd event time ext format")
-	flag.BoolVar(&showVersion, "V", false, "show version")
+	flag.BoolVar(&showVersion, "v", false, "show version")
 	flag.UintVar(&config.serverPort, "p", 8080, "port number for server mode")
 
 	flag.Parse()
