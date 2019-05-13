@@ -404,3 +404,62 @@ func TestVerboseJSONFloat(t *testing.T) {
 		}
 	}
 }
+
+type MPArray struct {
+	MPBase
+	Value []MPInt `json:value`
+}
+
+func TestVerboseJSONArray(t *testing.T) {
+	type testcase struct {
+		casename string
+		bytes    []byte
+		length   int
+	}
+
+	cases := []testcase{
+		{"fixarray len2", []byte{0x92, 0x00, 0x01}, 2},
+		{"array16", []byte{0xdc, 0x00, 0x0f, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00}, 15},
+	}
+
+	zb := bytes.Buffer{}
+	z, err := msgpack.Decode(bytes.NewBuffer([]byte{0x00}))
+	outputVerboseJSON(z, &zb, 0)
+	zero := MPInt{}
+	err = json.Unmarshal(zb.Bytes(), &zero)
+	if err != nil {
+		t.Errorf("json.Unmarshal Error")
+	}
+
+	ob := bytes.Buffer{}
+	o, err := msgpack.Decode(bytes.NewBuffer([]byte{0x01}))
+	outputVerboseJSON(o, &ob, 0)
+	one := MPInt{}
+	err = json.Unmarshal(ob.Bytes(), &one)
+	if err != nil {
+		t.Errorf("json.Unmarshal Error")
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPArray{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if len(p.Value) != v.length {
+			t.Errorf("%s: Length Error given: %d. expected: %d", v.casename, len(p.Value), v.length)
+		}
+		for i, c := range p.Value {
+			if i%2 == 0 && c != zero {
+				t.Errorf("%s:mismatch given: %v. expected: %v", v.casename, c, zero)
+			} else if i%2 != 0 && c != one {
+				t.Errorf("%s:mismatch given: %v. expected: %v", v.casename, c, one)
+			}
+		}
+	}
+}
