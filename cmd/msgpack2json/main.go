@@ -184,6 +184,8 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	case msgpack.IsExt(obj.FirstByte):
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
+	case msgpack.NilFormat == obj.FirstByte:
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":null}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw)
 	default:
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	}
@@ -229,6 +231,8 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprint(out, "]")
 	case msgpack.IsString(obj.FirstByte) || msgpack.IsBin(obj.FirstByte):
 		fmt.Fprintf(out, "\"%s\"", obj.DataStr)
+	case msgpack.NilFormat == obj.FirstByte:
+		fmt.Fprintf(out, "null")
 	default:
 		fmt.Fprint(out, obj.DataStr)
 	}

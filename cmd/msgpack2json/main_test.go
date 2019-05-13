@@ -43,7 +43,7 @@ func TestOutputJSON(t *testing.T) {
 		{"nested array", []byte{0x82, 0xa1, 0x30, 0xa1, 0x30, 0xa1, 0x31, 0x93, 0x00, 0x01, 0x02}, `{"0":"0","1":[0,1,2]}`},
 
 		{"n fixint", []byte{0xff}, "-1"},
-		{"nil", []byte{0xc0}, "nil"},
+		{"nil", []byte{0xc0}, "null"},
 		{"never used", []byte{0xc1}, "(never used)"},
 		{"true", []byte{0xc3}, "true"},
 		{"false", []byte{0xc2}, "false"},
@@ -273,4 +273,27 @@ func TestVerboseJSONBool(t *testing.T) {
 			t.Errorf("%s: mismatch. given: %t. expected: %t", v.casename, p.Value, v.expected)
 		}
 	}
+}
+
+type MPNil struct {
+	MPBase
+	Value *bool `json:value`
+}
+
+func TestVerboseJSONNil(t *testing.T) {
+	b := []byte{0xc0}
+	buf := bytes.Buffer{}
+
+	ret, err := msgpack.Decode(bytes.NewBuffer(b))
+	outputVerboseJSON(ret, &buf, 0)
+
+	p := MPNil{}
+	err = json.Unmarshal(buf.Bytes(), &p)
+	if err != nil {
+		t.Errorf("Nil: Unmarshal Error %s", err)
+	}
+	if p.Value != nil {
+		t.Errorf("Nil: Value is not nil")
+	}
+
 }
