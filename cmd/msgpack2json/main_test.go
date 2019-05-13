@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/nokute78/msgpack2txt/pkg/msgpack"
 	"strings"
@@ -162,13 +163,38 @@ func TestOutputJSON(t *testing.T) {
 	}
 }
 
-/*
-func TestOutputVerboseJSON(t *testing.T) {
+func TestVerboseJSONString(t *testing.T) {
+	type MPString struct {
+		Format string `json:format`
+		Byte   string `json:header`
+		Raw    string `json:raw`
+		Value  string `json:value`
+	}
+
 	type testcase struct {
 		casename string
-		msgpdata []byte
+		bytes    []byte
 		expected string
 	}
 
+	cases := []testcase{
+		{"fixstr", []byte{0xa2, 0x41, 0x42}, `AB`},
+		{"str8", []byte{0xd9, 0x0f, 0xe3, 0x81, 0x93, 0xe3, 0x82, 0x93, 0xe3, 0x81, 0xab, 0xe3, 0x81, 0xa1, 0xe3, 0x81, 0xaf}, `こんにちは`},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPString{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if v.expected != p.Value {
+			t.Errorf("%s: mismatch. given: %s. expected: %s", v.casename, p.Value, v.expected)
+		}
+	}
 }
-*/
