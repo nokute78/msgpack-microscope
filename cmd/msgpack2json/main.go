@@ -142,7 +142,6 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		// array header info
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
 
-
 		if int(obj.Length) != len(obj.Child) {
 			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d children.\n", obj.Length, len(obj.Child))
 			return
