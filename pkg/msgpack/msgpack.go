@@ -106,6 +106,11 @@ func IsExt(b byte) bool {
 	return (isExt(b) || isFixExt(b))
 }
 
+// IsBin reports whether the byte is bin format family header.
+func IsBin(b byte) bool {
+	return (b >= 0xc4 && b <= 0xc6)
+}
+
 // Init initializes internal ext format settings.
 func Init() {
 	extFormatInit()

@@ -268,6 +268,19 @@ func TestIsExt(t *testing.T) {
 	}
 }
 
+func TestIsBin(t *testing.T) {
+	var i uint
+
+	for i = 0; i <= 0xff; i++ {
+		ok := IsBin(byte(i))
+		if ok && (i < 0xc4 && i > 0xc6) {
+			t.Errorf("IsBin Error! 0x%x is not Bin", i)
+		} else if !ok && (i >= 0xc4 && i <= 0xc6) {
+			t.Errorf("IsBin Error! 0x%x is Bin", i)
+		}
+	}
+}
+
 func TestShortenData(t *testing.T) {
 	currentcase := ""
 
@@ -319,7 +332,8 @@ func TestShortenData(t *testing.T) {
 		{"Array32 Shorten Length", []byte{0xdd, 0x01}},
 		{"Map16 Shorten Length", []byte{0xde, 0x01}},
 		{"Map32 Shorten Length", []byte{0xdf, 0x01}},
-		/* no types */
+		/* Ext no types */
+		/* FixExt family are already tested at Only Header test*/
 		{"Ext8 no type", []byte{0xc7, 0x01}},
 		{"Ext16 no type", []byte{0xc8, 0x00, 0x01}},
 		{"Ext32 no type", []byte{0xc9, 0x00, 0x00, 0x00, 0x01}},
