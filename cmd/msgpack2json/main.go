@@ -186,6 +186,10 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
 	case msgpack.NilFormat == obj.FirstByte:
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":null}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw)
+	case msgpack.NeverUsedFormat == obj.FirstByte:
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+		fmt.Fprintf(os.Stderr, "Error: Never Used Format detected\n")
+		return
 	default:
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	}
@@ -233,6 +237,9 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, "\"%s\"", obj.DataStr)
 	case msgpack.NilFormat == obj.FirstByte:
 		fmt.Fprintf(out, "null")
+	case msgpack.NeverUsedFormat == obj.FirstByte:
+		fmt.Fprintf(os.Stderr, "Error: Never Used Format detected\n")
+		return 
 	default:
 		fmt.Fprint(out, obj.DataStr)
 	}

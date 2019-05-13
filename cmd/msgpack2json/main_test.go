@@ -44,7 +44,7 @@ func TestOutputJSON(t *testing.T) {
 
 		{"n fixint", []byte{0xff}, "-1"},
 		{"nil", []byte{0xc0}, "null"},
-		{"never used", []byte{0xc1}, "(never used)"},
+		{"never used", []byte{0xc1}, ""},
 		{"true", []byte{0xc3}, "true"},
 		{"false", []byte{0xc2}, "false"},
 		{"float32", []byte{0xca, 0x80, 0x00, 0x00, 0x00}, "-0.000000"},
