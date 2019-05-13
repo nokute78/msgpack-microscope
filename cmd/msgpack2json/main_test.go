@@ -295,5 +295,112 @@ func TestVerboseJSONNil(t *testing.T) {
 	if p.Value != nil {
 		t.Errorf("Nil: Value is not nil")
 	}
+}
 
+type MPInt struct {
+	MPBase
+	Value int64 `json:value`
+}
+
+func TestVerboseJSONInt(t *testing.T) {
+	type testcase struct {
+		casename string
+		bytes    []byte
+		expected int64
+	}
+
+	cases := []testcase{
+		{"p fixint", []byte{0x01}, 1},
+		{"n fixint", []byte{0xff}, -1},
+		{"int8", []byte{0xd0, 0xff}, -1},
+		{"int16", []byte{0xd1, 0xff, 0x00}, -256},
+		{"int32", []byte{0xd2, 0xff, 0x00, 0xff, 0x00}, -16711936},
+		{"int64", []byte{0xd3, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00}, -71777214294589696},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPInt{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if v.expected != p.Value {
+			t.Errorf("%s: mismatch. given: %d. expected: %d", v.casename, p.Value, v.expected)
+		}
+	}
+}
+
+type MPUint struct {
+	MPBase
+	Value uint64 `json:value`
+}
+
+func TestVerboseJSONUint(t *testing.T) {
+	type testcase struct {
+		casename string
+		bytes    []byte
+		expected uint64
+	}
+
+	cases := []testcase{
+		{"uint8", []byte{0xcc, 0xff}, 255},
+		{"uint16", []byte{0xcd, 0xff, 0x00}, 65280},
+		{"uint32", []byte{0xce, 0xff, 0x00, 0xff, 0x00}, 4278255360},
+		{"uint64", []byte{0xcf, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00}, 18374966859414961920},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPUint{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if v.expected != p.Value {
+			t.Errorf("%s: mismatch. given: %d. expected: %d", v.casename, p.Value, v.expected)
+		}
+	}
+}
+
+type MPFloat struct {
+	MPBase
+	Value float64 `json:value`
+}
+
+func TestVerboseJSONFloat(t *testing.T) {
+	type testcase struct {
+		casename string
+		bytes    []byte
+		expected float64
+	}
+
+	cases := []testcase{
+		{"float32", []byte{0xca, 0x80, 0x00, 0x00, 0x00}, -0.000000},
+		{"float64", []byte{0xcb, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, -0.000000},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPFloat{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if v.expected != p.Value {
+			t.Errorf("%s: mismatch. given: %f. expected: %f", v.casename, p.Value, v.expected)
+		}
+	}
 }

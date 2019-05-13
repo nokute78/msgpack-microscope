@@ -239,7 +239,7 @@ func outputJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, "null")
 	case msgpack.NeverUsedFormat == obj.FirstByte:
 		fmt.Fprintf(os.Stderr, "Error: Never Used Format detected\n")
-		return 
+		return
 	default:
 		fmt.Fprint(out, obj.DataStr)
 	}
