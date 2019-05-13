@@ -173,7 +173,7 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	case msgpack.IsString(obj.FirstByte):
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	case msgpack.IsExt(obj.FirstByte):
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
 	default:
 		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
 	}
