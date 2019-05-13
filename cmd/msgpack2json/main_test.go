@@ -211,14 +211,6 @@ type MPExt struct {
 }
 
 func TestVerboseJSONExt(t *testing.T) {
-	type MPExt struct {
-		Format string `json:format`
-		Byte   string `json:header`
-		Type   int8   `json:type`
-		Raw    string `json:raw`
-		Value  string `json:value`
-	}
-
 	type testcase struct {
 		casename string
 		bytes    []byte
@@ -245,6 +237,40 @@ func TestVerboseJSONExt(t *testing.T) {
 		}
 		if v.expected != p.Value {
 			t.Errorf("%s: mismatch. given: %s. expected: %s", v.casename, p.Value, v.expected)
+		}
+	}
+}
+
+type MPBool struct {
+	MPBase
+	Value bool `json:value`
+}
+
+func TestVerboseJSONBool(t *testing.T) {
+	type testcase struct {
+		casename string
+		bytes    []byte
+		expected bool
+	}
+
+	cases := []testcase{
+		{"true", []byte{0xc3}, true},
+		{"false", []byte{0xc2}, false},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPBool{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if v.expected != p.Value {
+			t.Errorf("%s: mismatch. given: %t. expected: %t", v.casename, p.Value, v.expected)
 		}
 	}
 }
