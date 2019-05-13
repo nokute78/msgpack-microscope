@@ -198,3 +198,42 @@ func TestVerboseJSONString(t *testing.T) {
 		}
 	}
 }
+
+func TestVerboseJSONExt(t *testing.T) {
+	type MPExt struct {
+		Format string `json:format`
+		Byte   string `json:header`
+		Type   int8   `json:type`
+		Raw    string `json:raw`
+		Value  string `json:value`
+	}
+
+	type testcase struct {
+		casename string
+		bytes    []byte
+		expected string
+	}
+
+	cases := []testcase{
+		{"fixext1", []byte{0xd4, 0x01, 0xff}, "0xff"},
+		{"fixext2", []byte{0xd5, 0x01, 0xfe, 0xed}, "0xfeed"},
+		{"fixext4", []byte{0xd6, 0x01, 0xde, 0xad, 0xbe, 0xef}, "0xdeadbeef"},
+		{"fixext8", []byte{0xd7, 0x01, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef}, "0xdeadbeefdeadbeef"},
+	}
+
+	buf := bytes.Buffer{}
+	for _, v := range cases {
+		buf.Reset()
+		ret, err := msgpack.Decode(bytes.NewBuffer(v.bytes))
+		outputVerboseJSON(ret, &buf, 0)
+
+		p := MPExt{}
+		err = json.Unmarshal(buf.Bytes(), &p)
+		if err != nil {
+			t.Errorf("%s: Unmarshal Error %s", v.casename, err)
+		}
+		if v.expected != p.Value {
+			t.Errorf("%s: mismatch. given: %s. expected: %s", v.casename, p.Value, v.expected)
+		}
+	}
+}
