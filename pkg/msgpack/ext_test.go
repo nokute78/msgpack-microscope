@@ -23,8 +23,6 @@ import (
 )
 
 func TestTimestampExt(t *testing.T) {
-	Init()
-
 	tm32 := &MPObject{FirstByte: 0xd6, ExtType: -1}
 	if !tm32.setRegisteredExt([]byte{0x00, 0x00, 0x00, 0x01}) {
 		t.Error("tm32.setRegisteredExt Failed")
@@ -54,7 +52,6 @@ func TestTimestampExt(t *testing.T) {
 }
 
 func TestFluentdEventTime(t *testing.T) {
-	Init()
 	RegisterFluentdEventTime()
 
 	fixext8 := &MPObject{FirstByte: 0xd7, ExtType: 0}

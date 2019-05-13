@@ -111,11 +111,6 @@ func IsBin(b byte) bool {
 	return (b >= 0xc4 && b <= 0xc6)
 }
 
-// Init initializes internal ext format settings.
-func Init() {
-	extFormatInit()
-}
-
 func typeStr(b byte) string {
 	switch b {
 	case NilFormat:
@@ -269,7 +264,6 @@ func (obj *MPObject) setCollection(buf *bytes.Buffer, length int) error {
 
 // Decode analyzes buf and convert MPObject.
 func Decode(buf *bytes.Buffer) (*MPObject, error) {
-	Init()
 	return decode(buf)
 }
 

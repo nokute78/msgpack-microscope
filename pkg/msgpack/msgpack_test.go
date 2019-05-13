@@ -32,8 +32,6 @@ func TestDecode(t *testing.T) {
 		obj      *MPObject
 	}
 
-	Init()
-
 	cases := []testcase{
 		{"p fixint", []byte{0x01}, &MPObject{DataStr: "1", TypeName: "positive fixint"}},
 		{"n fixint", []byte{0xff}, &MPObject{DataStr: "-1", TypeName: "negative fixint"}},
@@ -162,8 +160,6 @@ func TestDecode(t *testing.T) {
 func TestNestedMap(t *testing.T) {
 	/* {"0":"0", "1":{"2":"2", "3":"3", "4":"4"}} in JSON */
 	b := []byte{0x82, 0xa1, 0x30, 0xa1, 0x30, 0xa1, 0x31, 0x83, 0xa1, 0x32, 0xa1, 0x32, 0xa1, 0x33, 0xa1, 0x33, 0xa1, 0x34, 0xa1, 0x34}
-
-	Init()
 
 	ret, err := Decode(bytes.NewBuffer(b))
 	if err != nil && err != io.EOF {
@@ -371,7 +367,6 @@ func TestShortenData(t *testing.T) {
 		{"Shorten Map32 Key", []byte{0xdf, 0x00, 0x00, 0x00, 0x04, 0xa1, 0x60}},
 	}
 
-	Init()
 	for _, v := range cases {
 		currentcase = v.casename
 		_, err := Decode(bytes.NewBuffer(v.bytes))

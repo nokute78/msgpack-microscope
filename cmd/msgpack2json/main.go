@@ -230,8 +230,6 @@ func cmdMain() int {
 
 	flag.Parse()
 
-	msgpack.Init()
-
 	if showVersion {
 		fmt.Printf("Ver: %s\n", version)
 		return 0

@@ -82,7 +82,11 @@ func extEventTimeV1(b []byte) string {
 	return fmt.Sprintf("%v", time.Unix(int64(sec), int64(nsec)))
 }
 
-var extFormats map[byte]([]*ExtFormat)
+var extFormats map[byte]([]*ExtFormat) = map[byte]([]*ExtFormat){
+	FixExt4Format: []*ExtFormat{&ExtFormat{FirstByte: FixExt4Format, ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32}},
+	FixExt8Format: []*ExtFormat{&ExtFormat{FirstByte: FixExt8Format, ExtType: -1, TypeName: "timestamp 64", DecodeFunc: timestamp64}},
+	Ext8Format:    []*ExtFormat{&ExtFormat{FirstByte: Ext8Format, ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96}},
+}
 
 // RegisterFluentdEventTime registers Fluentd ext timestamp format.
 // https://github.com/fluent/fluentd/wiki/Forward-Protocol-Specification-v1 */
@@ -103,17 +107,6 @@ func RegisterExt(ext *ExtFormat) error {
 
 	extFormats[ext.FirstByte] = append(extFormats[ext.FirstByte], ext)
 	return nil
-}
-
-func extFormatInit() {
-	if len(extFormats) != 0 {
-		return
-	}
-	extFormats = map[byte]([]*ExtFormat){}
-
-	RegisterExt(&ExtFormat{FirstByte: FixExt4Format, ExtType: -1, TypeName: "timestamp 32", DecodeFunc: timestamp32})
-	RegisterExt(&ExtFormat{FirstByte: FixExt8Format, ExtType: -1, TypeName: "timestamp 64", DecodeFunc: timestamp64})
-	RegisterExt(&ExtFormat{FirstByte: Ext8Format, ExtType: -1, TypeName: "timestamp 96", DecodeFunc: timestamp96})
 }
 
 func (obj *MPObject) setExtType(buf *bytes.Buffer) error {
