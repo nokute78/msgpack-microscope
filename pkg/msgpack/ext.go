@@ -127,7 +127,7 @@ func (obj *MPObject) setRegisteredExt(extData []byte) bool {
 	if ok && len(list) > 0 {
 		for _, v := range list {
 			if v.ExtType == obj.ExtType {
-				obj.TypeName = v.TypeName
+				obj.FormatName = v.TypeName
 				obj.DataStr = v.DecodeFunc(extData)
 				return true
 			}
