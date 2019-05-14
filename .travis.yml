@@ -1,0 +1,13 @@
+language: go
+os:
+  - linux
+
+git:
+  depth: 1
+
+notifications:
+  email: false
+
+script:
+  - go vet ./...
+  - go test -v -race ./...
