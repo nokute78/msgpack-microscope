@@ -140,7 +140,7 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		spaces2 := strings.Repeat("    ", nest+1)
 
 		// array header info
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.FormatName, obj.FirstByte, obj.Length, obj.Raw)
 
 		if int(obj.Length) != len(obj.Child) {
 			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d children.\n", obj.Length, len(obj.Child))
@@ -161,7 +161,7 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 	case msgpack.IsMap(obj.FirstByte):
 		spaces2 := strings.Repeat("    ", nest+1)
 		// map header info
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.TypeName, obj.FirstByte, obj.Length, obj.Raw)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "length":%d, "raw":"0x%0x", "value":`, spaces, obj.FormatName, obj.FirstByte, obj.Length, obj.Raw)
 
 		if int(obj.Length*2) != len(obj.Child) {
 			fmt.Fprintf(os.Stderr, "Error: size mismatch. length is %d, buf %d(!=length*2) children.\n", obj.Length, len(obj.Child))
@@ -181,17 +181,17 @@ func outputVerboseJSON(obj *msgpack.MPObject, out io.Writer, nest int) {
 		fmt.Fprintf(out, "\n%s]\n%s}", spaces2, spaces)
 
 	case msgpack.IsString(obj.FirstByte) || msgpack.IsBin(obj.FirstByte):
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":"%s"}`, spaces, obj.FormatName, obj.FirstByte, obj.Raw, obj.DataStr)
 	case msgpack.IsExt(obj.FirstByte):
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":"%s"}`, spaces, obj.TypeName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "type":%d, "raw":"0x%0x", "value":"%s"}`, spaces, obj.FormatName, obj.FirstByte, obj.ExtType, obj.Raw, obj.DataStr)
 	case msgpack.NilFormat == obj.FirstByte:
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":null}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":null}`, spaces, obj.FormatName, obj.FirstByte, obj.Raw)
 	case msgpack.NeverUsedFormat == obj.FirstByte:
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.FormatName, obj.FirstByte, obj.Raw, obj.DataStr)
 		fmt.Fprintf(os.Stderr, "Error: Never Used Format detected\n")
 		return
 	default:
-		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.TypeName, obj.FirstByte, obj.Raw, obj.DataStr)
+		fmt.Fprintf(out, `%s{"format":"%s", "header":"0x%02x", "raw":"0x%0x", "value":%s}`, spaces, obj.FormatName, obj.FirstByte, obj.Raw, obj.DataStr)
 	}
 }
 

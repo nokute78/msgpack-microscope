@@ -184,26 +184,26 @@ func typeStr(b byte) string {
 // MPObject represents message pack object.
 // If the object is array or map, MPObject has Child which represents each element.
 type MPObject struct {
-	FirstByte byte
-	TypeName  string
-	ExtType   int8   /* for ext family*/
-	Length    uint32 /* for map, array and str family*/
-	DataStr   string
-	Raw       []byte
-	Child     []*MPObject
+	FirstByte  byte
+	FormatName string
+	ExtType    int8   /* for ext family*/
+	Length     uint32 /* for map, array and str family*/
+	DataStr    string
+	Raw        []byte
+	Child      []*MPObject
 }
 
 // String implements Stringer interface.
 func (obj *MPObject) String() string {
 	switch {
 	case IsArray(obj.FirstByte) || IsMap(obj.FirstByte):
-		return fmt.Sprintf(`%s(0x%02x): length=%d`, obj.TypeName, obj.FirstByte, obj.Length)
+		return fmt.Sprintf(`%s(0x%02x): length=%d`, obj.FormatName, obj.FirstByte, obj.Length)
 	case IsString(obj.FirstByte):
-		return fmt.Sprintf(`%s(0x%02x): val="%s"`, obj.TypeName, obj.FirstByte, obj.DataStr)
+		return fmt.Sprintf(`%s(0x%02x): val="%s"`, obj.FormatName, obj.FirstByte, obj.DataStr)
 	case IsExt(obj.FirstByte):
-		return fmt.Sprintf(`%s(0x%02x): type=%d val=%s`, obj.TypeName, obj.FirstByte, obj.ExtType, obj.DataStr)
+		return fmt.Sprintf(`%s(0x%02x): type=%d val=%s`, obj.FormatName, obj.FirstByte, obj.ExtType, obj.DataStr)
 	default:
-		return fmt.Sprintf(`%s(0x%02x): val=%s`, obj.TypeName, obj.FirstByte, obj.DataStr)
+		return fmt.Sprintf(`%s(0x%02x): val=%s`, obj.FormatName, obj.FirstByte, obj.DataStr)
 	}
 }
 
@@ -277,13 +277,13 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 
 	switch {
 	case isPositiveFixInt(firstbyte):
-		obj.TypeName = "positive fixint"
+		obj.FormatName = "positive fixint"
 		obj.DataStr = fmt.Sprintf("%d", int8(firstbyte))
 	case isNegativeFixInt(firstbyte):
-		obj.TypeName = "negative fixint"
+		obj.FormatName = "negative fixint"
 		obj.DataStr = fmt.Sprintf("%d", int8(firstbyte))
 	case isFixMap(firstbyte):
-		obj.TypeName = "fixmap"
+		obj.FormatName = "fixmap"
 		obj.Length = uint32(firstbyte & 0xf)
 		obj.DataStr = "(fixmap)"
 		err := obj.setCollection(buf, int(obj.Length)*2)
@@ -291,7 +291,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			return obj, err
 		}
 	case isFixArray(firstbyte):
-		obj.TypeName = "fixarray"
+		obj.FormatName = "fixarray"
 		obj.Length = uint32(firstbyte & 0xf)
 		obj.DataStr = "(fixarray)"
 		err := obj.setCollection(buf, int(obj.Length))
@@ -299,7 +299,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 			return obj, err
 		}
 	case isFixStr(firstbyte):
-		obj.TypeName = "fixstr"
+		obj.FormatName = "fixstr"
 		obj.Length = uint32(firstbyte & 0x1f)
 		bufs, err := nextWithError(buf, int(obj.Length))
 		if err != nil {
@@ -308,7 +308,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.DataStr = string(bufs)
 		obj.Raw = append(obj.Raw, bufs...)
 	case isFixExt(firstbyte):
-		obj.TypeName = typeStr(firstbyte)
+		obj.FormatName = typeStr(firstbyte)
 		err := obj.setExtType(buf)
 		if err != nil {
 			return obj, err
@@ -322,7 +322,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		}
 		obj.Raw = append(obj.Raw, data...)
 	case isExt(firstbyte):
-		obj.TypeName = typeStr(firstbyte)
+		obj.FormatName = typeStr(firstbyte)
 		/* length */
 		switch firstbyte {
 		case Ext8Format:
@@ -359,7 +359,7 @@ func decode(buf *bytes.Buffer) (*MPObject, error) {
 		obj.Raw = append(obj.Raw, data...)
 
 	default:
-		obj.TypeName = typeStr(firstbyte)
+		obj.FormatName = typeStr(firstbyte)
 		switch firstbyte {
 		case NilFormat:
 			obj.DataStr = "nil"
