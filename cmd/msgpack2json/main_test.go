@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/nokute78/msgpack2txt/pkg/msgpack"
+	"github.com/nokute78/msgpack-microscope/pkg/msgpack"
 	"strings"
 	"testing"
 )
