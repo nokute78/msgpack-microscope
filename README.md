@@ -3,7 +3,9 @@
 A library and tool to analyze MessagePack
 
 ## Installation
-TODO: go get hoge
+```
+$ go get github.com/nokute78/msgpack-microscope/pkg/msgpack
+```
 
 ## Usage
 TODO :add code
