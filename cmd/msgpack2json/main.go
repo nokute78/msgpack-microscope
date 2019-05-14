@@ -31,7 +31,7 @@ import (
 	"github.com/nokute78/msgpack-microscope/pkg/msgpack"
 )
 
-const version string = "0.0.1"
+const version string = "1.0.0"
 
 type config struct {
 	showSource bool
