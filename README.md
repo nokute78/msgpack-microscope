@@ -1,5 +1,8 @@
 # msgpack-microscope
 
+[![Build Status](https://travis-ci.org/nokute78/msgpack-microscope.svg?branch=master)](https://travis-ci.org/nokute78/msgpack-microscope)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nokute78/msgpack-microscope)](https://goreportcard.com/report/github.com/nokute78/msgpack-microscope)
+
 A library and tool to analyze [MessagePack](https://msgpack.org/).
 
 ## Installation
