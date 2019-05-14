@@ -164,14 +164,14 @@ func TestOutputJSON(t *testing.T) {
 }
 
 type MPBase struct {
-	Format string `json:format`
-	Byte   string `json:header`
-	Raw    string `json:raw`
+	Format string `json:"format"`
+	Byte   string `json:"header"`
+	Raw    string `json:"raw"`
 }
 
 type MPString struct {
 	MPBase
-	Value string `json:value`
+	Value string `json:"value"`
 }
 
 func TestVerboseJSONString(t *testing.T) {
@@ -206,8 +206,8 @@ func TestVerboseJSONString(t *testing.T) {
 
 type MPExt struct {
 	MPBase
-	Type  int8   `json:type`
-	Value string `json:value`
+	Type  int8   `json:"type"`
+	Value string `json:"value"`
 }
 
 func TestVerboseJSONExt(t *testing.T) {
@@ -243,7 +243,7 @@ func TestVerboseJSONExt(t *testing.T) {
 
 type MPBool struct {
 	MPBase
-	Value bool `json:value`
+	Value bool `json:"value"`
 }
 
 func TestVerboseJSONBool(t *testing.T) {
@@ -277,7 +277,7 @@ func TestVerboseJSONBool(t *testing.T) {
 
 type MPNil struct {
 	MPBase
-	Value *bool `json:value`
+	Value *bool `json:"value"`
 }
 
 func TestVerboseJSONNil(t *testing.T) {
@@ -299,7 +299,7 @@ func TestVerboseJSONNil(t *testing.T) {
 
 type MPInt struct {
 	MPBase
-	Value int64 `json:value`
+	Value int64 `json:"value"`
 }
 
 func TestVerboseJSONInt(t *testing.T) {
@@ -337,7 +337,7 @@ func TestVerboseJSONInt(t *testing.T) {
 
 type MPUint struct {
 	MPBase
-	Value uint64 `json:value`
+	Value uint64 `json:"value"`
 }
 
 func TestVerboseJSONUint(t *testing.T) {
@@ -373,7 +373,7 @@ func TestVerboseJSONUint(t *testing.T) {
 
 type MPFloat struct {
 	MPBase
-	Value float64 `json:value`
+	Value float64 `json:"value"`
 }
 
 func TestVerboseJSONFloat(t *testing.T) {
@@ -407,7 +407,7 @@ func TestVerboseJSONFloat(t *testing.T) {
 
 type MPArray struct {
 	MPBase
-	Value []MPInt `json:value`
+	Value []MPInt `json:"value"`
 }
 
 func TestVerboseJSONArray(t *testing.T) {
@@ -466,7 +466,7 @@ func TestVerboseJSONArray(t *testing.T) {
 
 type MPMap struct {
 	MPBase
-	Value []map[string]interface{} `json:value`
+	Value []map[string]interface{} `json:"value"`
 }
 
 /*
