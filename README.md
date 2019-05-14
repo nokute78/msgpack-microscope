@@ -11,7 +11,47 @@ $ go get github.com/nokute78/msgpack-microscope/pkg/msgpack
 ```
 
 ## Usage
-TODO :add code
+
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"github.com/nokute78/msgpack-microscope/pkg/msgpack"
+	"os"
+)
+
+func showMsgPack(obj *msgpack.MPObject) {
+	switch {
+	case msgpack.IsMap(obj.FirstByte) || msgpack.IsArray(obj.FirstByte):
+		for _, v := range obj.Child {
+			showMsgPack(v)
+		}
+	default:
+		fmt.Fprintf(os.Stdout, "%s\n", obj)
+	}
+}
+
+func main() {
+	/* {"compact":true,"schema":0} in JSON */
+	msgp := []byte{0x82, 0xa7, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74, 0xc3, 0xa6, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x00}
+
+	ret, err := msgpack.Decode(bytes.NewBuffer(msgp))
+	if err != nil {
+		os.Exit(-1)
+	}
+	showMsgPack(ret)
+}
+```
+
+Ouput :
+```
+fixstr(0xa7): val="compact"
+true(0xc3): val=true
+fixstr(0xa6): val="schema"
+positive fixint(0x00): val=0
+```
 
 ## Tool
 * [msgpack2json](cmd/msgpack2json/README.md)
