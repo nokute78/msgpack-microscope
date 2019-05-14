@@ -1,6 +1,6 @@
 # msgpack-microscope
 
-A library and tool to analyze MessagePack
+A library and tool to analyze [MessagePack](https://msgpack.org/).
 
 ## Installation
 ```
