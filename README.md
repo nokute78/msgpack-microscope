@@ -24,13 +24,12 @@ import (
 )
 
 func showMsgPack(obj *msgpack.MPObject) {
-	switch {
-	case msgpack.IsMap(obj.FirstByte) || msgpack.IsArray(obj.FirstByte):
+	fmt.Fprintf(os.Stdout, "%s\n", obj)
+
+	if msgpack.IsMap(obj.FirstByte) || msgpack.IsArray(obj.FirstByte) {
 		for _, v := range obj.Child {
 			showMsgPack(v)
 		}
-	default:
-		fmt.Fprintf(os.Stdout, "%s\n", obj)
 	}
 }
 
@@ -48,6 +47,7 @@ func main() {
 
 Ouput :
 ```
+fixmap(0x82): length=2
 fixstr(0xa7): val="compact"
 true(0xc3): val=true
 fixstr(0xa6): val="schema"
