@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/nokute78/msgpack-microscope.svg?branch=master)](https://travis-ci.org/nokute78/msgpack-microscope)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nokute78/msgpack-microscope)](https://goreportcard.com/report/github.com/nokute78/msgpack-microscope)
+[![GoDoc](https://godoc.org/github.com/nokute78/msgpack-microscope/pkg/msgpack?status.svg)](https://godoc.org/github.com/nokute78/msgpack-microscope/pkg/msgpack)
 
 A library and tool to analyze [MessagePack](https://msgpack.org/).
 
