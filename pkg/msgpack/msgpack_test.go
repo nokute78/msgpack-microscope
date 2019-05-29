@@ -288,7 +288,7 @@ func TestShortenData(t *testing.T) {
 	defer func(str *string) {
 		err := recover()
 		if err != nil {
-			t.Errorf("%s: panic occured. %s", *str, err)
+			t.Errorf("%s: panic occurred. %s", *str, err)
 			debug.PrintStack()
 		}
 	}(&currentcase)
